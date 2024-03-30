@@ -1,0 +1,19 @@
+(ocamllex (modules lexer))
+(ocamlyacc (modules parser))
+
+(library
+  (name MinCaml)
+  (public_name joecc.lib)
+  (modules (:standard \ main))
+  (flags (-w -4-33-40-41))
+  (libraries str)
+  (preprocess (pps ppx_deriving.show))
+  (foreign_stubs (language c) (names float)))
+
+(executable
+  (name main)
+  (public_name joecc)
+  (flags (-w -4-33-40-41))
+  (modules Main)
+  (package joecc)
+  (libraries MinCaml BacCaml x64))

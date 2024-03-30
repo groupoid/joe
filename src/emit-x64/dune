@@ -1,0 +1,6 @@
+(library
+  (name x64)
+  (public_name joecc.x64)
+  (flags (-w -4-33-40-41))
+  (libraries str MinCaml)
+  (preprocess (pps ppx_deriving.show)))
