@@ -10,37 +10,45 @@ type t =
 
 and exp =
   | Nop
-  | Set of int
-  | SetL of Id.l
-  | Mov of Id.t
-  | Neg of Id.t
-  | Add of Id.t * id_or_imm
-  | Sub of Id.t * id_or_imm
-  | Mul of Id.t * id_or_imm
-  | Div of Id.t * id_or_imm
-  | Mod of Id.t * id_or_imm
-  | Ld of Id.t * id_or_imm * int
-  | St of Id.t * Id.t * id_or_imm * int
+  | Set   of int
+  | SetL  of Id.l
+  | Mov   of Id.t
+  (* ALU instructions *)
+  | Neg   of Id.t
+  | Add   of Id.t * id_or_imm
+  | Sub   of Id.t * id_or_imm
+  | Mul   of Id.t * id_or_imm
+  | Div   of Id.t * id_or_imm
+  | Mod   of Id.t * id_or_imm
+  (* load/store instructions *)
+  | Lfd   of Id.t * id_or_imm
+  | Lwz   of Id.t * id_or_imm
+  | Ld    of Id.t * id_or_imm * int
+  | Slw   of Id.t * id_or_imm
+  | Stw   of Id.t * Id.t * id_or_imm
+  | Stfd  of Id.t * Id.t * id_or_imm
+  | St    of Id.t * Id.t * id_or_imm * int
+  (* float instructions *)
   | FMovD of Id.t
   | FNegD of Id.t
   | FAddD of Id.t * Id.t
   | FSubD of Id.t * Id.t
   | FMulD of Id.t * Id.t
   | FDivD of Id.t * Id.t
-  | LdDF of Id.t * id_or_imm * int
-  | StDF of Id.t * Id.t * id_or_imm * int
-  | Comment of string
+  | LdDF  of Id.t * id_or_imm * int
+  | StDF  of Id.t * Id.t * id_or_imm * int
+  | Comment  of string
   (* virtual instructions *)
   | IfEq of Id.t * id_or_imm * t * t
   | IfLE of Id.t * id_or_imm * t * t
-  | IfGE of Id.t * id_or_imm * t * t
+  | IfGE of Id.t * id_or_imm * t * t (* 左右対称ではないので必要 *)
   | IfFEq of Id.t * Id.t * t * t
   | IfFLE of Id.t * Id.t * t * t
   (* closure address, integer arguments, and float arguments *)
   | CallCls of Id.t * Id.t list * Id.t list
   | CallDir of Id.l * Id.t list * Id.t list
-  | Save of Id.t * Id.t
-  | Restore of Id.t
+  | Save of Id.t * Id.t (* レジスタ変数の値をスタック変数へ保存 (caml2html: sparcasm_save) *)
+  | Restore of Id.t (* スタック変数から値を復元 (caml2html: sparcasm_restore) *)
 [@@deriving show]
 
 type fundef =
@@ -53,7 +61,7 @@ type fundef =
   }
 [@@deriving show]
 
-(* �ץ���������� = ��ư���������ơ��֥� + �ȥåץ�٥�ؿ� + �ᥤ��μ� (caml2html: sparcasm_prog) *)
+(* プログラム全体 = 浮動小数点数テーブル + トップレベル関数 + メインの式 (caml2html: sparcasm_prog) *)
 type prog = Prog of (Id.l * float) list * fundef list * t [@@deriving show]
 
 let fletd (x, e1, e2) = Let ((x, Type.Float), e1, e2)

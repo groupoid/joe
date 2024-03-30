@@ -8,39 +8,45 @@ type t =
 
 and exp =
   | Nop
-  | Set of int
-  | SetL of Id.l
-  | Mov of Id.t
-  | Neg of Id.t
-  | Add of Id.t * id_or_imm
-  | Sub of Id.t * id_or_imm
-  | Mul of Id.t * id_or_imm
-  | Div of Id.t * id_or_imm
-  | Mod of Id.t * id_or_imm
-  | Ld of Id.t * id_or_imm * int
-  | St of Id.t * Id.t * id_or_imm * int
+  | Set   of int
+  | SetL  of Id.l
+  | Mov   of Id.t
+  (* ALU instructions *)
+  | Neg   of Id.t
+  | Add   of Id.t * id_or_imm
+  | Sub   of Id.t * id_or_imm
+  | Mul   of Id.t * id_or_imm
+  | Div   of Id.t * id_or_imm
+  | Mod   of Id.t * id_or_imm
+  (* load/store instructions *)
+  | Lfd   of Id.t * id_or_imm
+  | Lwz   of Id.t * id_or_imm
+  | Ld    of Id.t * id_or_imm * int
+  | Slw   of Id.t * id_or_imm
+  | Stw   of Id.t * Id.t * id_or_imm
+  | Stfd  of Id.t * Id.t * id_or_imm
+  | St    of Id.t * Id.t * id_or_imm * int
+  (* float instructions *)
   | FMovD of Id.t
   | FNegD of Id.t
   | FAddD of Id.t * Id.t
   | FSubD of Id.t * Id.t
   | FMulD of Id.t * Id.t
   | FDivD of Id.t * Id.t
-  | LdDF of Id.t * id_or_imm * int
-  | StDF of Id.t * Id.t * id_or_imm * int
-  | Comment of string
+  | LdDF  of Id.t * id_or_imm * int
+  | StDF  of Id.t * Id.t * id_or_imm * int
+  | Comment  of string
   (* virtual instructions *)
   | IfEq of Id.t * id_or_imm * t * t
   | IfLE of Id.t * id_or_imm * t * t
-  | IfGE of Id.t * id_or_imm * t * t
+  | IfGE of Id.t * id_or_imm * t * t (* Â∑¶Âè≥ÂØæÁß∞„Åß„ÅØ„Å™„ÅÑ„ÅÆ„ÅßÂøÖË¶Å *)
   | IfFEq of Id.t * Id.t * t * t
   | IfFLE of Id.t * Id.t * t * t
   (* closure address, integer arguments, and float arguments *)
   | CallCls of Id.t * Id.t list * Id.t list
   | CallDir of Id.l * Id.t list * Id.t list
-  | Save of Id.t * Id.t (* •Ï•∏•π•ø —øÙ§Œ√Õ§Ú•π•ø•√•Ø —øÙ§ÿ ›¬∏ *)
-  | Restore of Id.t
-
-(* •π•ø•√•Ø —øÙ§´§È√Õ§Ú…¸∏µ *)
+  | Save of Id.t * Id.t (* „É¨„Ç∏„Çπ„ÇøÂ§âÊï∞„ÅÆÂÄ§„Çí„Çπ„Çø„ÉÉ„ÇØÂ§âÊï∞„Å∏‰øùÂ≠ò (caml2html: sparcasm_save) *)
+  | Restore of Id.t (* „Çπ„Çø„ÉÉ„ÇØÂ§âÊï∞„Åã„ÇâÂÄ§„ÇíÂæ©ÂÖÉ (caml2html: sparcasm_restore) *)
 
 type fundef =
   { name : Id.l

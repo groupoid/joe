@@ -1,5 +1,5 @@
 open Asm
-open X86
+open X64
 
 (* for register coalescing *)
 (* [XXX] Callがあったら、そこから先は無意味というか逆効果なので追わない。

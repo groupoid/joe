@@ -1,9 +1,9 @@
 (* translation into assembly with infinite number of virtual registers *)
 
 open Asm
-open X86
+open X64
 
-let data = ref [] (* ��ư��������������ơ��֥� (caml2html: virtual_data) *)
+let data = ref [] (* 浮動小数点数の定数テーブル (caml2html: virtual_data) *)
 
 let classify xts ini addf addi =
   List.fold_left
@@ -31,17 +31,18 @@ let expand xts ini addf addi =
     (fun (offset, acc) x ->
       let offset = align offset in
       offset + 8, addf x offset acc)
-    (fun (offset, acc) x t -> offset + 4, addi x t offset acc)
+    (fun (offset, acc) x t ->
+      (* NOTE: 64ビットなので4バイトから8バイトにする *)
+      offset + 8, addi x t offset acc)
 ;;
 
-let rec g env = function
-  (* ���β��ۥޥ��󥳡������� (caml2html: virtual_g) *)
+let rec g env = function (* 式の仮想マシンコード生成 (caml2html: virtual_g) *)
   | Closure.Unit -> Ans Nop
   | Closure.Int i -> Ans (Set i)
   | Closure.Float d ->
     let l =
-      (* ���Ǥ�����ơ��֥�ˤ��ä�������� *)
       try
+        (* すでに定数テーブルにあったら再利用 Cf. https://github.com/esumii/min-caml/issues/13 *)
         let l, _ = List.find (fun (_, d') -> d = d') !data in
         l
       with
@@ -82,15 +83,14 @@ let rec g env = function
     | Type.Unit -> Ans Nop
     | Type.Float -> Ans (FMovD x)
     | _ -> Ans (Mov x))
-  | Closure.MakeCls ((x, t), { Closure.entry = l; Closure.actual_fv = ys }, e2)
-    ->
-    (* ��������������� (caml2html: virtual_makecls) *)
-    (* Closure�Υ��ɥ쥹�򥻥åȤ��Ƥ��顢��ͳ�ѿ����ͤ򥹥ȥ� *)
+  | Closure.MakeCls ((x, t), { Closure.entry = l; Closure.actual_fv = ys }, e2) -> (* クロージャの生成 (caml2html: virtual_makecls) *)
+    (* Closureのアドレスをセットしてから、自由変数の値をストア *)
     let e2' = g (M.add x t env) e2 in
     let offset, store_fv =
       expand
         (List.map (fun y -> y, M.find y env) ys)
-        (4, e2')
+        (* NOTE: 64ビットなので4バイトから8バイトにする *)
+        (8, e2')
         (fun y offset store_fv -> seq (StDF (y, x, C offset, 1), store_fv))
         (fun y _ offset store_fv -> seq (St (y, x, C offset, 1), store_fv))
     in
@@ -108,8 +108,7 @@ let rec g env = function
   | Closure.AppDir (Id.L x, ys) ->
     let int, float = separate (List.map (fun y -> y, M.find y env) ys) in
     Ans (CallDir (Id.L x, int, float))
-  | Closure.Tuple xs ->
-    (* �Ȥ����� (caml2html: virtual_tuple) *)
+  | Closure.Tuple xs -> (* 組の生成 (caml2html: virtual_tuple) *)
     let y = Id.genid "t" in
     let offset, store =
       expand
@@ -130,35 +129,44 @@ let rec g env = function
         (0, g (M.add_list xts env) e2)
         (fun x offset load ->
           if not (S.mem x s)
-          then load
-          else
-            (* [XX] a little ad hoc optimization *)
-            fletd (x, LdDF (y, C offset, 1), load))
+          then load else (* [XX] a little ad hoc optimization *)
+               fletd (x, LdDF (y, C offset, 1), load))
         (fun x t offset load ->
           if not (S.mem x s)
-          then load
-          else
-            (* [XX] a little ad hoc optimization *)
-            Let ((x, t), Ld (y, C offset, 1), load))
+          then load else (* [XX] a little ad hoc optimization *)
+               Let ((x, t), Ld (y, C offset, 1), load))
     in
     load
-  | Closure.Get (x, y) ->
-    (* ������ɤ߽Ф� (caml2html: virtual_get) *)
-    (match M.find x env with
-    | Type.Array Type.Unit -> Ans Nop
-    | Type.Array Type.Float -> Ans (LdDF (x, V y, 8))
-    | Type.Array _ -> Ans (Ld (x, V y, 4))
-    | _ -> assert false)
-  | Closure.Put (x, y, z) ->
-    (match M.find x env with
-    | Type.Array Type.Unit -> Ans Nop
-    | Type.Array Type.Float -> Ans (StDF (z, x, V y, 8))
-    | Type.Array _ -> Ans (St (z, x, V y, 4))
-    | _ -> assert false)
+  | Closure.Get(x, y) -> (* 配列の読み出し (caml2html: virtual_get) *)
+      let offset = Id.genid "o" in
+      (match M.find x env with
+      | Type.Array(Type.Unit) -> Ans(Nop)
+      | Type.Array(Type.Float) ->
+          (* float の Array は1要素で8バイトなので、渡されたインデックス値を8倍したものをオフセットとする *)
+          Let((offset, Type.Int), Slw(y, C(3)),
+              Ans(Lfd(x, V(offset))))
+      | Type.Array(_) ->
+          (* int の Array は1要素で8バイトなので、渡されたインデックス値を8倍したものをオフセットとする *)
+          Let((offset, Type.Int), Slw(y, C(3)),
+              Ans(Lwz(x, V(offset))))
+      | _ -> assert false)
+  | Closure.Put(x, y, z) ->
+      let offset = Id.genid "o" in
+      (match M.find x env with
+      | Type.Array(Type.Unit) -> Ans(Nop)
+      | Type.Array(Type.Float) ->
+          (* float の Array は1要素で8バイトなので、渡されたインデックス値を8倍したものをオフセットとする *)
+          Let((offset, Type.Int), Slw(y, C(3)),
+              Ans(Stfd(z, x, V(offset))))
+      | Type.Array(_) ->
+          (* int の Array は1要素で8バイトなので、渡されたインデックス値を8倍したものをオフセットとする *)
+          Let((offset, Type.Int), Slw(y, C(3)),
+              Ans(Stw(z, x, V(offset))))
+      | _ -> assert false)
   | Closure.ExtArray (Id.L x) -> Ans (SetL (Id.L ("min_caml_" ^ x)))
 ;;
 
-(* �ؿ��β��ۥޥ��󥳡������� (caml2html: virtual_h) *)
+(* 関数の仮想マシンコード生成 (caml2html: virtual_h) *)
 let h
     { Closure.name = Id.L x, t
     ; Closure.args = yts
@@ -171,7 +179,8 @@ let h
   let offset, load =
     expand
       zts
-      (4, g (M.add x t (M.add_list yts (M.add_list zts M.empty))) e)
+      (* NOTE: 64ビットなので4バイトから8バイトにする *)
+      (8, g (M.add x t (M.add_list yts (M.add_list zts M.empty))) e)
       (fun z offset load -> fletd (z, LdDF (x, C offset, 1), load))
       (fun z t offset load -> Let ((z, t), Ld (x, C offset, 1), load))
   in
@@ -181,7 +190,7 @@ let h
   | _ -> assert false
 ;;
 
-(* �ץ���������Τβ��ۥޥ��󥳡������� (caml2html: virtual_f) *)
+(* プログラム全体の仮想マシンコード生成 (caml2html: virtual_f) *)
 let f (Closure.Prog (fundefs, e)) =
   data := [];
   let fundefs = List.map h fundefs in
