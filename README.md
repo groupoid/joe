@@ -32,6 +32,14 @@ _build/install/default/bin/joe -intel examples/ack.ml
 generating assembly...OK
 ```
 
+Publications
+------------
+
+* <a href="https://esumii.github.io/min-caml/index-e.html">Eijiro Sumii. A Crash Course for the MinCaml compiler</a>.<br>
+
+* <a href="">Eijiro Sumii. MinCaml: A Simple and Efficient Compiler for a Minimal Functional Language</a>.<br>
+* <a href="https://tonpa.guru/stream/2024/2024-03-30%20Інформатика.htm">М. Сохацький. Інформатика</a>.<br>
+
 Credits
 -------
 
