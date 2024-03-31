@@ -5,16 +5,12 @@ open Asm.X64
 external gethi : float -> int32 = "gethi"
 external getlo : float -> int32 = "getlo"
 
-let stackset = ref S.empty (* ¤¹¤Ç¤ËSave¤µ¤ì¤¿ÊÑ¿ô¤Î½¸¹ç (caml2html: emit_stackset) *)
-
-let stackmap = ref []
-
-(* Save¤µ¤ì¤¿ÊÑ¿ô¤Î¡¢¥¹¥¿¥Ã¥¯¤Ë¤ª¤±¤ë°ÌÃÖ (caml2html: emit_stackmap) *)
+let stackset = ref S.empty (* ã™ã§ã«Saveã•ã‚ŒãŸå¤‰æ•°ã®é›†åˆ (caml2html: emit_stackset)
+let stackmap = ref [] (* Saveã•ã‚ŒãŸå¤‰æ•°ã®ã€ã‚¹ã‚¿ãƒƒã‚¯ã«ãŠã‘ã‚‹ä½ç½® (caml2html: emit_stackmap) *)
 
 let save x =
   stackset := S.add x !stackset;
   if not (List.mem x !stackmap) then stackmap := !stackmap @ [ x ]
-;;
 
 let savef x =
   stackset := S.add x !stackset;
@@ -24,7 +20,6 @@ let savef x =
       if List.length !stackmap mod 2 = 0 then [] else [ Id.gentmp Type.Int ]
     in
     stackmap := !stackmap @ pad @ [ x; x ])
-;;
 
 let locate x =
   let rec loc = function
@@ -35,13 +30,13 @@ let locate x =
   loc !stackmap
 ;;
 
+(* NOTE: 64ãƒ“ãƒƒãƒˆãªã®ã§ 4 ãƒã‚¤ãƒˆã‹ã‚‰ 8 ãƒã‚¤ãƒˆã«ä¿®æ­£ *)
 let offset x = 8 * List.hd (locate x) (*4->8*)
-
 let stacksize () = align (List.length !stackmap * 8) (*4->8*)
 
 let pp_id_or_imm = function V x -> x | C i -> "$" ^ string_of_int i
 
-(* ´Ø¿ô¸Æ¤Ó½Ð¤·¤Î¤¿¤á¤Ë°ú¿ô¤òÊÂ¤ÙÂØ¤¨¤ë(register shuffling) (caml2html: emit_shuffle) *)
+(* é–¢æ•°å‘¼ã³å‡ºã—ã®ãŸã‚ã«å¼•æ•°ã‚’ä¸¦ã¹æ›¿ãˆã‚‹(register shuffling) (caml2html: emit_shuffle) *)
 let rec shuffle sw xys =
   (* remove identical moves *)
   let _, xys = List.partition (fun (x, y) -> x = y) xys in
@@ -58,22 +53,16 @@ let rec shuffle sw xys =
   | xys, acyc -> acyc @ shuffle sw xys
 ;;
 
-type dest =
-  | Tail
-  | NonTail of Id.t
+type dest = Tail | NonTail of Id.t (* æœ«å°¾ã‹ã©ã†ã‹ã‚’è¡¨ã™ãƒ‡ãƒ¼ã‚¿åž‹ (caml2html: emit_dest) *)
 
-(* ËöÈø¤«¤É¤¦¤«¤òÉ½¤¹¥Ç¡¼¥¿·¿ (caml2html: emit_dest) *)
-
-let rec g oc = function
-  (* Ì¿ÎáÎó¤Î¥¢¥»¥ó¥Ö¥êÀ¸À® (caml2html: emit_g) *)
+let rec g oc = function (* å‘½ä»¤åˆ—ã®ã‚¢ã‚»ãƒ³ãƒ–ãƒªç”Ÿæˆ (caml2html: emit_g) *)
   | dest, Ans exp -> g' oc (dest, exp)
   | dest, Let ((x, t), exp, e) ->
     g' oc (NonTail x, exp);
     g oc (dest, e)
 
-and g' oc = function
-  (* ³ÆÌ¿Îá¤Î¥¢¥»¥ó¥Ö¥êÀ¸À® (caml2html: emit_gprime) *)
-  (* ËöÈø¤Ç¤Ê¤«¤Ã¤¿¤é·×»»·ë²Ì¤òdest¤Ë¥»¥Ã¥È (caml2html: emit_nontail) *)
+and g' oc = function (* å„å‘½ä»¤ã®ã‚¢ã‚»ãƒ³ãƒ–ãƒªç”Ÿæˆ (caml2html: emit_gprime) *)
+  (* æœ«å°¾ã§ãªã‹ã£ãŸã‚‰è¨ˆç®—çµæžœã‚’destã«ã‚»ãƒƒãƒˆ (caml2html: emit_nontail) *)
   | NonTail _, Nop -> ()
   | NonTail x, Set i -> Printf.fprintf oc "\tmovq\t$%d, %s\n" i x
   | NonTail x, SetL (Id.L y) -> Printf.fprintf oc "\tmovq\t$%s, %s\n" y x
