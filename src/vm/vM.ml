@@ -2,29 +2,26 @@ open Printf
 open MinCaml
 open Config
 open Insts
+open Stdlib
 
 let max_stack_depth = 1000000
 let with_debug f = match !vm_debug_flg with true -> f () | false -> ()
 
 let index_of element array =
-  fst
-    (List.find
-       (fun (_, v) -> v = element)
-       (List.mapi (fun idx v -> idx, v) (Array.to_list array)))
-;;
+  fst (List.find
+      (fun (_, v) -> v = element)
+      (List.mapi (fun idx v -> idx, v) (Array.to_list array)))
 
 let int_of_inst = function
   | Literal n -> n
   | Ldef lbl | Lref lbl -> failwith ("unresolved " ^ lbl)
   | inst -> index_of inst insts
-;;
 
 let string_of = function
   | Literal n -> Printf.sprintf "Literal %d" n
   | Ldef n -> Printf.sprintf "Ldef %s" n
   | Lref n -> Printf.sprintf "Lref %s" n
   | i -> string_of_int (int_of_inst i)
-;;
 
 (* operand stack
 
@@ -35,57 +32,38 @@ let string_of = function
 
 type value =
   | Int' of int
+  | String' of string
   | Array' of value array
 
 module Value = struct
-  let ( |+| ) v1 v2 =
-    match v1, v2 with
-    | Int' i, Int' j -> Int' (i + j)
-    | _ -> failwith "invalid value"
-  ;;
+  let ( |+| ) v1 v2 = match v1, v2 with | Int' i, Int' j -> Int' (i + j) | _ -> failwith "invalid value"
+  let ( |-| ) v1 v2 = match v1, v2 with | Int' i, Int' j -> Int' (i - j) | _ -> failwith "invalid value"
+  let ( |*| ) v1 v2 = match v1, v2 with | Int' i, Int' j -> Int' (i * j) | _ -> failwith "invalid value"
+  let ( |/| ) v1 v2 = match v1, v2 with | Int' i, Int' j -> Int' (i / j) | _ -> failwith "invalid value"
+  let ( |%| ) v1 v2 = match v1, v2 with | Int' i, Int' j -> Int' (i mod j) | _ -> failwith "invalid_arg"
+  let ( |<| ) v1 v2 = match v1, v2 with Int' i, Int' j -> i < j | _ -> failwith "invalid value"
+  let ( |=| ) v1 v2 = match v1, v2 with Int' i, Int' j -> i = j | _ -> failwith "invalid value"
 
-  let ( |-| ) v1 v2 =
-    match v1, v2 with
-    | Int' i, Int' j -> Int' (i - j)
-    | _ -> failwith "invalid value"
-  ;;
+  let int_of_value = function
+    | Int' i -> i
+    | String' _ -> failwith "string is not int"
+    | Array' _ -> failwith "array is not int"
 
-  let ( |*| ) v1 v2 =
-    match v1, v2 with
-    | Int' i, Int' j -> Int' (i * j)
-    | _ -> failwith "invalid value"
-  ;;
-
-  let ( |/| ) v1 v2 =
-    match v1, v2 with
-    | Int' i, Int' j -> Int' (i / j)
-    | _ -> failwith "invalid value"
-  ;;
-
-  let ( |%| ) v1 v2 =
-    match v1, v2 with
-    | Int' i, Int' j -> Int' (i mod j)
-    | _ -> failwith "invalid_arg"
-  ;;
-
-  let ( |<| ) v1 v2 =
-    match v1, v2 with Int' i, Int' j -> i < j | _ -> failwith "invalid value"
-  ;;
-
-  let ( |=| ) v1 v2 =
-    match v1, v2 with Int' i, Int' j -> i = j | _ -> failwith "invalid value"
-  ;;
-
-  let int_of_value = function Int' i -> i | _ -> failwith "array is not int"
+  let string_of_value = function
+    | Int' i -> failwith (sprintf "int %d is not string" i)
+    | String' s -> s
+    | Array' arr -> failwith (sprintf "array is not string")
 
   let array_of_value = function
-    | Array' arr -> arr
     | Int' i -> failwith (sprintf "int %d is not array" i)
-  ;;
+    | String' s -> failwith (sprintf "string %s is not array" s)
+    | Array' arr -> arr
 
   let value_of_int i = Int' i
   let value_of_array arr = Array' arr
+  let value_of_string s = String' s
 end
+
 
 type stack = int * value array
 
@@ -165,7 +143,7 @@ let dump_stack (sp, stack) =
     if i = sp
     then ""
     else
-      (match stack.(i) with Int' i -> string_of_int i | Array' _ -> "array")
+      (match stack.(i) with Int' i -> string_of_int i | Array' _ -> "array" | String' _ -> "string")
       ^ ";"
       ^ loop (i + 1)
   in
@@ -338,11 +316,6 @@ let rec interp code pc stack =
       (array_of_value arr).(int_of_value i) <- n;
       let stack = push stack arr in
       interp code pc stack
-    | PRINT_INT ->
-      let n, stack = pop stack in
-      print_int (int_of_value n);
-      let stack = push stack n in
-      interp code pc stack
     | PRINT_NEWLINE ->
       print_newline ();
       interp code pc stack
@@ -354,6 +327,21 @@ let rec interp code pc stack =
     | READ_INT ->
       let v = read_int () in
       let stack = push stack (value_of_int v) in
+      interp code pc stack
+    | READ_STRING ->
+      let v = read_line () in
+      let stack = push stack (value_of_string v) in
+      interp code pc stack
+    | PRINT_INT ->
+      let n, stack = pop stack in
+      print_int (int_of_value n);
+      let stack = push stack n in
+      interp code pc stack
+    | PRINT_STRING ->
+      let s, stack = pop stack in
+      let v = string_of_value s in
+      print_string v;
+      let stack = v |> String.length |> value_of_int |> push stack in
       interp code pc stack
     | METHOD_COMP | TRACING_COMP | METHOD_ENTRY | JIT_SETUP ->
       interp code pc stack

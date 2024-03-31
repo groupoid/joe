@@ -270,6 +270,12 @@ min_caml_modulo:
 	movl	%ebp, %esp
 	popl	%ebp
 	ret
+.globl min_caml_print_string
+min_caml_print_string:
+	ret
+.globl min_caml_read_string
+min_caml_read_string:
+	ret
 .globl min_caml_divide
 min_caml_divide:
 	pushl	%ebp

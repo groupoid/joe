@@ -35,6 +35,8 @@ type inst =
   | Literal of int
   | Lref of string
   | Ldef of string
+  | READ_STRING
+  | PRINT_STRING
 [@@deriving show]
 
 let insts =
@@ -71,6 +73,8 @@ let insts =
    ; MOD
    ; GT
    ; READ_INT
+   ; READ_STRING
+   ; PRINT_STRING
   |]
 ;;
 

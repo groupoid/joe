@@ -152,16 +152,13 @@ and compile_exp fname env exp =
     @ [ Ldef l1 ]
     @ compile_t fname env else_exp
     @ [ Ldef l2 ]
-  | CallDir (Id.L "min_caml_print_int", [ x ], _) ->
-    compile_id_or_imm env (V x) @ [ PRINT_INT ]
-  | CallDir (Id.L "min_caml_print_newline", _, _) -> [ PRINT_NEWLINE ]
   | CallDir (Id.L "min_caml_read_int", _, _) -> [ READ_INT ]
-  | CallDir (Id.L "min_caml_rand_int", [ x ], _) ->
-    compile_id_or_imm env (V x) @ [ RAND_INT ]
-  | CallDir (Id.L "min_caml_create_array", [ x; y ], _) ->
-    compile_id_or_imm env (V x)
-    @ compile_id_or_imm (shift_env env) (V y)
-    @ [ ARRAY_MAKE ]
+  | CallDir (Id.L "min_caml_print_int", [ x ], _) -> compile_id_or_imm env (V x) @ [ PRINT_INT ]
+  | CallDir (Id.L "min_caml_read_string", _, _) -> [ READ_STRING ]
+  | CallDir (Id.L "min_caml_print_string", [x], _) -> compile_id_or_imm env (V x) @ [ PRINT_STRING ]
+  | CallDir (Id.L "min_caml_print_newline", _, _) -> [ PRINT_NEWLINE ]
+  | CallDir (Id.L "min_caml_rand_int", [ x ], _) -> compile_id_or_imm env (V x) @ [ RAND_INT ]
+  | CallDir (Id.L "min_caml_create_array", [ x; y ], _) -> compile_id_or_imm env (V x) @ compile_id_or_imm (shift_env env) (V y) @ [ ARRAY_MAKE ]
   | CallDir (Id.L var, rands, _) ->
     (List.fold_left
        ~f:(fun (rev_code_list, env) v ->

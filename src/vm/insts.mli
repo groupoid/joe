@@ -35,6 +35,8 @@ type inst =
   | Literal of int
   | Lref of string
   | Ldef of string
+  | READ_STRING
+  | PRINT_STRING 
 
 val show_inst : inst -> string
 val insts : inst array
