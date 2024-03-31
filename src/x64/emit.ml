@@ -310,7 +310,7 @@ let f oc (Prog (data, fundefs, e)) =
   Printf.fprintf oc ".globl\tmin_caml_start\n";
   Printf.fprintf oc "min_caml_start:\n";
   Printf.fprintf oc ".globl\t_min_caml_start\n";
-  Printf.fprintf oc "_min_caml_start: # for cygwin\n";
+  Printf.fprintf oc "_min_caml_start:\n";
   Printf.fprintf oc "\tpushq\t%%rax\n";
   Printf.fprintf oc "\tpushq\t%%rbx\n";
   Printf.fprintf oc "\tpushq\t%%rcx\n";
