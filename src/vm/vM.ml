@@ -64,19 +64,10 @@ module Value = struct
   let value_of_string s = String' s
 end
 
-
 type stack = int * value array
 
-let push : stack -> value -> stack =
- fun (sp, stack) v ->
-  stack.(sp) <- v;
-  sp + 1, stack
-;;
-
-let pop : stack -> value * stack =
- fun (sp, stack) -> stack.(sp - 1), (sp - 1, stack)
-;;
-
+let push : stack -> value -> stack = fun (sp, stack) v -> stack.(sp) <- v ; sp + 1, stack
+let pop : stack -> value * stack = fun (sp, stack) -> stack.(sp - 1), (sp - 1, stack)
 let take : stack -> int -> value = fun (sp, stack) n -> stack.(sp - n - 1)
 let drop : stack -> int -> stack = fun (sp, stack) n -> sp - n, stack
 
@@ -113,7 +104,6 @@ let frame_reset : stack -> int -> int -> int -> stack =
       loop (i + 1))
   in
   loop 0
-;;
 
 let make_stack () = 0, Array.make max_stack_depth (Int' 0)
 
@@ -136,7 +126,6 @@ let code_at_pc code pc =
       code.(pc)
       (if pc + 1 < Array.length code then code.(pc + 1) else -1)
   else Printf.sprintf "pc=%d" pc
-;;
 
 let dump_stack (sp, stack) =
   let rec loop i =
@@ -148,7 +137,6 @@ let dump_stack (sp, stack) =
       ^ loop (i + 1)
   in
   "[" ^ loop 0 ^ "]"
-;;
 
 (* when the VM won't stop, you may turn on the following function to forcingly
    terminate after executing a certain amount of instructions *)
@@ -159,12 +147,10 @@ let checkpoint =
     fun () ->
       if !counter = 0 then failwith "expired!" else counter := !counter - 1)
   else fun () -> ()
-;;
 
 let debug pc inst stack =
   with_debug (fun () ->
       eprintf "%d %s %s\n" (pc - 1) (show_inst inst) (dump_stack stack))
-;;
 
 let rec interp code pc stack =
   checkpoint ();
@@ -343,24 +329,18 @@ let rec interp code pc stack =
       print_string v;
       let stack = v |> String.length |> value_of_int |> push stack in
       interp code pc stack
-    | METHOD_COMP | TRACING_COMP | METHOD_ENTRY | JIT_SETUP ->
-      interp code pc stack
+    | METHOD_COMP | TRACING_COMP | METHOD_ENTRY | JIT_SETUP -> interp code pc stack
     | _ -> failwith (sprintf "un matched pattern: %s" (show_inst inst)))
-;;
 
 (* run the given program by calling the function id 0 *)
 type fundef_bin_t = int array
 
-let run_bin : fundef_bin_t -> int =
- fun fundefs ->
-  let open Value in
-  let stack = push (make_stack ()) (value_of_int (-987)) in
-  int_of_value @@ interp fundefs 0 stack
-;;
+let run_bin : fundef_bin_t -> int = fun fundefs ->
+    let open Value in
+    let stack = push (make_stack ()) (value_of_int (-987)) in
+    int_of_value @@ interp fundefs 0 stack
 
 (* convert the given program into binary, and then run *)
 type fundef_asm_t = inst array
 
-let run_asm : fundef_asm_t -> int =
- fun fundefs -> run_bin (Array.map int_of_inst fundefs)
-;;
+let run_asm : fundef_asm_t -> int = fun fundefs -> run_bin (Array.map int_of_inst fundefs)
