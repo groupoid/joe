@@ -1,0 +1,8 @@
+(library
+  (name x86)
+  (public_name joe.x86)
+  (flags (-w -4-33-40-41))
+  (libraries str MinCaml)
+  (foreign_stubs (language c) (names float))
+  (foreign_stubs (language c) (names libmincaml))
+  (preprocess (pps ppx_deriving.show)))

@@ -15,4 +15,4 @@
   (flags (-w -4-33-40-41))
   (modules Main)
   (package joe)
-  (libraries MinCaml x64 arm64))
+  (libraries MinCaml x86 x64 arm64))
