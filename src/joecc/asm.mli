@@ -8,8 +8,11 @@ type t =
 
 and exp =
   | Nop
+  | Li    of int
+  | FLi   of Id.l
   | Set   of int
   | SetL  of Id.l
+  | Mr    of Id.t
   | Mov   of Id.t
   (* ALU instructions *)
   | Neg   of Id.t
@@ -27,14 +30,15 @@ and exp =
   | Stfd  of Id.t * Id.t * id_or_imm
   | St    of Id.t * Id.t * id_or_imm * int
   (* float instructions *)
-  | FMovD of Id.t
-  | FNegD of Id.t
-  | FAddD of Id.t * Id.t
-  | FSubD of Id.t * Id.t
-  | FMulD of Id.t * Id.t
-  | FDivD of Id.t * Id.t
+  | FMov  of Id.t
+  | FNeg  of Id.t
+  | FAdd  of Id.t * Id.t
+  | FSub  of Id.t * Id.t
+  | FMul  of Id.t * Id.t
+  | FDiv  of Id.t * Id.t
   | LdDF  of Id.t * id_or_imm * int
   | StDF  of Id.t * Id.t * id_or_imm * int
+  | FMr   of Id.t
   | Comment  of string
   (* virtual instructions *)
   | IfEq of Id.t * id_or_imm * t * t
@@ -73,8 +77,9 @@ module X86 : sig
   val allregs : Id.t list
   val allfregs : Id.t list
   val reg_cl : Id.t
-
-  (* val reg_sw : Id.t val reg_fsw : Id.t val reg_ra : Id.t *)
+  (* val reg_sw : Id.t
+     val reg_fsw : Id.t
+     val reg_ra : Id.t *)
   val reg_hp : Id.t
   val reg_sp : Id.t
   val is_reg : Id.t -> bool
@@ -88,6 +93,20 @@ module X64 : sig
   val reg_cl : Id.t
   val reg_hp : Id.t
   val reg_sp : Id.t
+  val is_reg : Id.t -> bool
+end
+
+module ARM64 : sig
+  val regs : Id.t array
+  val fregs  : Id.t array
+  val allregs : Id.t list
+  val allfregs : Id.t list
+  val reg_cl : Id.t
+  val reg_sw : Id.t
+  val reg_fsw : Id.t
+  val reg_sp : Id.t
+  val reg_hp : Id.t
+  val reg_tmp : Id.t
   val is_reg : Id.t -> bool
 end
 

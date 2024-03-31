@@ -1,10 +1,11 @@
 open MinCaml
 
 type backend =
-  | MinCaml
+  | Intel
+  | ARM
   | Virtual
 
-let backend_type = ref MinCaml
+let backend_type = ref Intel
 let debug = ref false
 let ast_dump = ref false
 let with_flag flag ~tru:f ~fls:g = if !flag then f () else g ()
@@ -27,7 +28,8 @@ let lexbuf oc l =
   |> Simm.f
   |> fun p ->
   match !backend_type with
-  | MinCaml -> RegAlloc.f p |> X64.Emit.f oc
+  | Intel -> RegAlloc.f p |> X64.Emit.f oc
+  | ARM -> RegAlloc.f p |> Arm64.Emit.f oc
   | Virtual -> Asm.show_prog p |> Printf.fprintf oc "%s"
 ;;
 
@@ -38,33 +40,31 @@ let main f =
   let outchan =
     let f = Filename.remove_extension f in
     match !backend_type with
-    | MinCaml -> open_out (f ^ ".s")
+    | Intel -> open_out (f ^ ".s")
+    | ARM -> open_out (f ^ ".arm")
     | _ -> stdout
   in
   try
     let input = Lexing.from_channel inchan in
-    with_flag
-      ast_dump
+    with_flag ast_dump
       ~tru:(fun _ -> ast outchan input)
-      ~fls:(fun _ ->
-        lexbuf outchan input;
-        close_in inchan;
-        close_out outchan)
+      ~fls:(fun _ -> lexbuf outchan input; close_in inchan; close_out outchan)
   with
   | e ->
     close_in inchan;
     close_out outchan;
     raise e
-;;
 
 let () =
   let files = ref [] in
   Arg.parse
-    [ ( "-inline" , Arg.Int (fun i -> Inline.threshold := i) , "maximum size of functions inlined" ) ;
-      ( "-iter"   , Arg.Int (fun i -> Util.limit := i), "maximum number of optimizations iterated" ) ;
-      ( "-ast",     Arg.Unit (fun _ -> ast_dump := true), "emit abstract syntax tree" ) ;
-      ( "-virtual" , Arg.Unit (fun _ -> backend_type := Virtual) , "emit virtual machine code" ) ;
-      ( "-debug", Arg.Unit (fun _ -> debug := true), "enable debug mode" )
+    [ ( "-inline", Arg.Int  (fun i -> Inline.threshold := i) , "maximum size of functions inlined" ) ;
+      ( "-iter",   Arg.Int  (fun i -> Util.limit := i), "maximum number of optimizations iterated" ) ;
+      ( "-ast",    Arg.Unit (fun _ -> ast_dump := true), "emit abstract syntax tree" ) ;
+      ( "-vm" ,    Arg.Unit (fun _ -> backend_type := Virtual) , "emit MinCaml IR virtual machine (joevm)" ) ;
+      ( "-intel" , Arg.Unit (fun _ -> backend_type := Intel) , "emit EM64T machine code" ) ;
+      ( "-arm" ,   Arg.Unit (fun _ -> backend_type := ARM) , "emit AArch64 machine code" ) ;
+      ( "-debug",  Arg.Unit (fun _ -> debug := true), "enable debug mode" )
     ]
     (fun s -> files := !files @ [ s ])
     ("Joe Min-Caml Compiler (c) 2024 Namdak Tonpa\n"
@@ -72,4 +72,4 @@ let () =
         "usage: %s [-inline m] [-iter n] ... filenames ..."
         Sys.argv.(0));
   List.iter (fun f -> main f) !files
-;;
+

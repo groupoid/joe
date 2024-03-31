@@ -10,8 +10,11 @@ type t =
 
 and exp =
   | Nop
+  | Li    of int
+  | FLi   of Id.l
   | Set   of int
   | SetL  of Id.l
+  | Mr    of Id.t
   | Mov   of Id.t
   (* ALU instructions *)
   | Neg   of Id.t
@@ -29,14 +32,15 @@ and exp =
   | Stfd  of Id.t * Id.t * id_or_imm
   | St    of Id.t * Id.t * id_or_imm * int
   (* float instructions *)
-  | FMovD of Id.t
-  | FNegD of Id.t
-  | FAddD of Id.t * Id.t
-  | FSubD of Id.t * Id.t
-  | FMulD of Id.t * Id.t
-  | FDivD of Id.t * Id.t
+  | FMov  of Id.t
+  | FNeg  of Id.t
+  | FAdd  of Id.t * Id.t
+  | FSub  of Id.t * Id.t
+  | FMul  of Id.t * Id.t
+  | FDiv  of Id.t * Id.t
   | LdDF  of Id.t * id_or_imm * int
   | StDF  of Id.t * Id.t * id_or_imm * int
+  | FMr   of Id.t
   | Comment  of string
   (* virtual instructions *)
   | IfEq of Id.t * id_or_imm * t * t
@@ -68,48 +72,48 @@ let fletd (x, e1, e2) = Let ((x, Type.Float), e1, e2)
 let seq (e1, e2) = Let ((Id.gentmp Type.Unit, Type.Unit), e1, e2)
 
 module X86 = struct
-  let regs =
-    (* Array.init 16 (fun i -> Printf.sprintf "%%r%d" i) *)
-    [| "%eax"; "%ebx"; "%ecx"; "%edx"; "%esi"; "%edi" |]
-  ;;
-
+  let regs = (* Array.init 16 (fun i -> Printf.sprintf "%%r%d" i) *) [| "%eax"; "%ebx"; "%ecx"; "%edx"; "%esi"; "%edi" |]
   let fregs = Array.init 8 (fun i -> Printf.sprintf "%%xmm%d" i)
   let allregs = Array.to_list regs
   let allfregs = Array.to_list fregs
   let reg_cl = regs.(Array.length regs - 1)
-
   (* closure address (caml2html: sparcasm_regcl) *)
-
-  (* let reg_sw = regs.(Array.length regs - 1) (* temporary for swap *) let
-     reg_fsw = fregs.(Array.length fregs - 1) (* temporary for swap *) *)
+  (* let reg_sw = regs.(Array.length regs - 1) (* temporary for swap *)
+  let reg_fsw = fregs.(Array.length fregs - 1) (* temporary for swap *) *)
   let reg_sp = "%ebp" (* stack pointer *)
-
   let reg_hp = "min_caml_hp" (* heap pointer (caml2html: sparcasm_reghp) *)
-
   (* let reg_ra = "%eax" (* return address *) *)
   let is_reg x = x.[0] = '%' || x = reg_hp
 end
 
 module X64 = struct
-  let regs =
-    (* Array.init 16 (fun i -> Printf.sprintf "%%r%d" i) *)
-    [| "%rax"; "%rbx"; "%rcx"; "%rdx"; "%rsi"; "%rdi" |]
-  ;;
-
+  let regs = (* Array.init 16 (fun i -> Printf.sprintf "%%r%d" i) *) [| "%rax"; "%rbx"; "%rcx"; "%rdx"; "%rsi"; "%rdi" |]
   let fregs = Array.init 8 (fun i -> Printf.sprintf "%%xmm%d" i)
   let allregs = Array.to_list regs
   let allfregs = Array.to_list fregs
   let reg_cl = regs.(Array.length regs - 1)
-
   (* closure address (caml2html: sparcasm_regcl) *)
-
   let reg_sp = "%rbp" (* stack pointer *)
-
   let reg_hp = "min_caml_hp" (* heap pointer (caml2html: sparcasm_reghp) *)
-
   let is_reg x = x.[0] = '%' || x = reg_hp
 end
 
+module ARM64 = struct
+  let regs = (* Array.init 27 (fun i -> Printf.sprintf "_R_%d" i) *)
+    [| "%x0"; "%x1"; "%x2"; "%x3"; "%x4"; "%x5"; "%x6"; "%x7"; "%x8"; "%x9"; "%x10";
+    "%x11"; "%x12"; "%x13"; "%x14"; "%x15"; "%x16"; "%x17"; "%x18"; "%x19"; "%x20";
+    "%x21"; "%x22"; "%x23"; "%x24"; "%x25" |]
+  let fregs = Array.init 32 (fun i -> Printf.sprintf "%%d%d" i)
+  let allregs = Array.to_list regs
+  let allfregs = Array.to_list fregs
+  let reg_cl = regs.(Array.length regs - 1) (* closure address (caml2html: sparcasm_regcl) *)
+  let reg_sw = regs.(Array.length regs - 2) (* temporary for swap *)
+  let reg_fsw = fregs.(Array.length fregs - 1) (* temporary for swap *)
+  let reg_sp = "%x28" (* stack pointer *)
+  let reg_hp = "%x27" (* heap pointer (caml2html: sparcasm_reghp) *)
+  let reg_tmp = "%x26" (* [XX] ad hoc *)
+  let is_reg x = (x.[0] = '%')
+end
 (* super-tenuki *)
 let rec remove_and_uniq xs = function
   | [] -> []
@@ -122,13 +126,13 @@ let fv_id_or_imm = function V x -> [ x ] | _ -> []
 
 let rec fv_exp = function
   | Nop | Set _ | SetL _ | Comment _ | Restore _ -> []
-  | Mov x | Neg x | FMovD x | FNegD x | Save (x, _) -> [ x ]
+  | Mov x | Neg x | FMov x | FNeg x | Save (x, _) -> [ x ]
   | Add (x, y') | Mul (x, y') | Sub (x, y') | Div (x, y') | Mod (x, y')
   | Ld (x, y', _) | LdDF (x, y', _) -> x :: fv_id_or_imm y'
   | St (x, y, z', _) | StDF (x, y, z', _) -> x :: y :: fv_id_or_imm z'
   | Slw(x, y') | Lfd(x, y') | Lwz(x, y') -> x :: fv_id_or_imm y'
   | Stw(x, y, z') | Stfd(x, y, z') -> x :: y :: fv_id_or_imm z'
-  | FAddD (x, y) | FSubD (x, y) | FMulD (x, y) | FDivD (x, y) -> [ x; y ]
+  | FAdd (x, y) | FSub (x, y) | FMul (x, y) | FDiv (x, y) -> [ x; y ]
   | IfEq (x, y', e1, e2) | IfLE (x, y', e1, e2) | IfGE (x, y', e1, e2) -> (x :: fv_id_or_imm y') @ remove_and_uniq S.empty (fv e1 @ fv e2)
   (* uniq here just for efficiency *)
   | IfFEq (x, y, e1, e2) | IfFLE (x, y, e1, e2) -> x :: y :: remove_and_uniq S.empty (fv e1 @ fv e2)

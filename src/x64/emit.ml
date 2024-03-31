@@ -5,7 +5,7 @@ open Asm.X64
 external gethi : float -> int32 = "gethi"
 external getlo : float -> int32 = "getlo"
 
-let stackset = ref S.empty (* すでにSaveされた変数の集合 (caml2html: emit_stackset)
+let stackset = ref S.empty  (* すでにSaveされた変数の集合 (caml2html: emit_stackset) *)
 let stackmap = ref [] (* Saveされた変数の、スタックにおける位置 (caml2html: emit_stackmap) *)
 
 let save x =
@@ -98,18 +98,18 @@ and g' oc = function (* 各命令のアセンブリ生成 (caml2html: emit_gprim
     Printf.fprintf oc "\tmovq\t%s, (%s,%s,%d)\n" x y z i
   | NonTail _, St (x, y, C j, i) ->
     Printf.fprintf oc "\tmovq\t%s, %d(%s)\n" x (j * i) y
-  | NonTail x, FMovD y ->
+  | NonTail x, FMov y ->
     if x <> y then Printf.fprintf oc "\tmovsd\t%s, %s\n" y x
-  | NonTail x, FNegD y ->
+  | NonTail x, FNeg y ->
     if x <> y then Printf.fprintf oc "\tmovsd\t%s, %s\n" y x;
     Printf.fprintf oc "\txorpd\tmin_caml_fnegd, %s\n" x
-  | NonTail x, FAddD (y, z) ->
+  | NonTail x, FAdd (y, z) ->
     if x = z
     then Printf.fprintf oc "\taddsd\t%s, %s\n" y x
     else (
       if x <> y then Printf.fprintf oc "\tmovsd\t%s, %s\n" y x;
       Printf.fprintf oc "\taddsd\t%s, %s\n" z x)
-  | NonTail x, FSubD (y, z) ->
+  | NonTail x, FSub (y, z) ->
     if x = z
     then (
       (* [XXX] ugly *)
@@ -120,13 +120,13 @@ and g' oc = function (* 各命令のアセンブリ生成 (caml2html: emit_gprim
     else (
       if x <> y then Printf.fprintf oc "\tmovsd\t%s, %s\n" y x;
       Printf.fprintf oc "\tsubsd\t%s, %s\n" z x)
-  | NonTail x, FMulD (y, z) ->
+  | NonTail x, FMul (y, z) ->
     if x = z
     then Printf.fprintf oc "\tmulsd\t%s, %s\n" y x
     else (
       if x <> y then Printf.fprintf oc "\tmovsd\t%s, %s\n" y x;
       Printf.fprintf oc "\tmulsd\t%s, %s\n" z x)
-  | NonTail x, FDivD (y, z) ->
+  | NonTail x, FDiv (y, z) ->
     if x = z
     then (
       (* [XXX] ugly *)
@@ -173,7 +173,7 @@ and g' oc = function (* 各命令のアセンブリ生成 (caml2html: emit_gprim
     g' oc (NonTail regs.(0), exp);
     Printf.fprintf oc "\tret\n"
   | ( Tail
-    , ((FMovD _ | FNegD _ | FAddD _ | FSubD _ | FMulD _ | FDivD _ | LdDF _) as
+    , ((FMov _ | FNeg _ | FAdd _ | FSub _ | FMul _ | FDiv _ | LdDF _) as
       exp) ) ->
     g' oc (NonTail fregs.(0), exp);
     Printf.fprintf oc "\tret\n"
