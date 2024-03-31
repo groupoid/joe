@@ -36,7 +36,7 @@ Publications
 ------------
 
 * <a href="https://esumii.github.io/min-caml/index-e.html">Eijiro Sumii. A Crash Course for the MinCaml compiler</a>.
-* <a href="">Eijiro Sumii. MinCaml: A Simple and Efficient Compiler for a Minimal Functional Language</a>.
+* <a href="https://esumii.github.io/min-caml/paper.pdf">Eijiro Sumii. MinCaml: A Simple and Efficient Compiler for a Minimal Functional Language</a>.
 * <a href="https://tonpa.guru/stream/2024/2024-03-30%20Інформатика.htm">М. Сохацький. Інформатика</a>.
 
 Credits
