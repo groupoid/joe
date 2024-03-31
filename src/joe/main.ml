@@ -68,8 +68,6 @@ let () =
     ]
     (fun s -> files := !files @ [ s ])
     ("MinCaml EM64T/AArch64/IR Compiler (c) 2024 Namdak Tonpa\n"
-    ^ Printf.sprintf
-        "usage: %s [-inline m] [-iter n] ... filenames ..."
-        Sys.argv.(0));
+    ^ "usage: joe [-inline m] [-iter n] ... filenames" );
   List.iter (fun f -> main f) !files
 
