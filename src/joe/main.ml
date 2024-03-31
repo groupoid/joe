@@ -61,13 +61,13 @@ let () =
     [ ( "-inline", Arg.Int  (fun i -> Inline.threshold := i) , "maximum size of functions inlined" ) ;
       ( "-iter",   Arg.Int  (fun i -> Util.limit := i), "maximum number of optimizations iterated" ) ;
       ( "-ast",    Arg.Unit (fun _ -> ast_dump := true), "emit abstract syntax tree" ) ;
-      ( "-vm" ,    Arg.Unit (fun _ -> backend_type := Virtual) , "emit MinCaml IR virtual machine (joevm)" ) ;
       ( "-intel" , Arg.Unit (fun _ -> backend_type := Intel) , "emit EM64T machine code" ) ;
       ( "-arm" ,   Arg.Unit (fun _ -> backend_type := ARM) , "emit AArch64 machine code" ) ;
+      ( "-vm" ,    Arg.Unit (fun _ -> backend_type := Virtual) , "emit MinCaml IR virtual machine (joevm)" ) ;
       ( "-debug",  Arg.Unit (fun _ -> debug := true), "enable debug mode" )
     ]
     (fun s -> files := !files @ [ s ])
-    ("Joe Min-Caml Compiler (c) 2024 Namdak Tonpa\n"
+    ("MinCaml EM64T/AArch64/IR Compiler (c) 2024 Namdak Tonpa\n"
     ^ Printf.sprintf
         "usage: %s [-inline m] [-iter n] ... filenames ..."
         Sys.argv.(0));

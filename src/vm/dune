@@ -1,6 +1,6 @@
 (library
  (name BacCaml)
- (public_name joevm.lib)
+ (public_name vm.lib)
  (modules (:standard \ main))
  (flags (-w -4-33-40-41))
  (libraries str MinCaml)
@@ -8,8 +8,8 @@
 
 (executable
  (name main)
- (public_name joevm)
+ (public_name vm)
  (flags (-w -4-33-40-41))
  (modules Main)
- (package joevm)
+ (package vm)
  (libraries MinCaml BacCaml))
