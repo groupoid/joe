@@ -3,4 +3,5 @@
   (public_name joe.arm64)
   (flags (-w -4-33-40-41))
   (libraries str MinCaml)
+  (foreign_stubs (language c) (names libmincaml))
   (preprocess (pps ppx_deriving.show)))

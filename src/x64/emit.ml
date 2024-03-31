@@ -9,26 +9,22 @@ let stackset = ref S.empty  (* すでにSaveされた変数の集合 (caml2html:
 let stackmap = ref [] (* Saveされた変数の、スタックにおける位置 (caml2html: emit_stackmap) *)
 
 let save x =
-  stackset := S.add x !stackset;
-  if not (List.mem x !stackmap) then stackmap := !stackmap @ [ x ]
+    stackset := S.add x !stackset;
+    if not (List.mem x !stackmap) then stackmap := !stackmap @ [ x ]
 
 let savef x =
-  stackset := S.add x !stackset;
-  if not (List.mem x !stackmap)
-  then (
+    stackset := S.add x !stackset;
+    if not (List.mem x !stackmap) then (
     let pad =
-      if List.length !stackmap mod 2 = 0 then [] else [ Id.gentmp Type.Int ]
-    in
-    stackmap := !stackmap @ pad @ [ x; x ])
+        if List.length !stackmap mod 2 = 0 then [] else [ Id.gentmp Type.Int ]
+     in stackmap := !stackmap @ pad @ [ x; x ])
 
 let locate x =
-  let rec loc = function
-    | [] -> []
-    | y :: zs when x = y -> 0 :: List.map succ (loc zs)
-    | y :: zs -> List.map succ (loc zs)
-  in
-  loc !stackmap
-;;
+    let rec loc = function
+      | [] -> []
+      | y :: zs when x = y -> 0 :: List.map succ (loc zs)
+      | y :: zs -> List.map succ (loc zs)
+    in loc !stackmap
 
 (* NOTE: 64ビットなので 4 バイトから 8 バイトに修正 *)
 let offset x = 8 * List.hd (locate x) (*4->8*)
@@ -38,20 +34,15 @@ let pp_id_or_imm = function V x -> x | C i -> "$" ^ string_of_int i
 
 (* 関数呼び出しのために引数を並べ替える(register shuffling) (caml2html: emit_shuffle) *)
 let rec shuffle sw xys =
-  (* remove identical moves *)
-  let _, xys = List.partition (fun (x, y) -> x = y) xys in
-  (* find acyclic moves *)
-  match List.partition (fun (_, y) -> List.mem_assoc y xys) xys with
-  | [], [] -> []
-  | (x, y) :: xys, [] ->
-    (* no acyclic moves; resolve a cyclic move *)
-    (y, sw)
-    :: (x, y)
-    :: shuffle
-         sw
-         (List.map (function y', z when y = y' -> sw, z | yz -> yz) xys)
-  | xys, acyc -> acyc @ shuffle sw xys
-;;
+    (* remove identical moves *)
+    let _, xys = List.partition (fun (x, y) -> x = y) xys in
+    (* find acyclic moves *)
+    match List.partition (fun (_, y) -> List.mem_assoc y xys) xys with
+    | [], [] -> []
+    | (x, y) :: xys, [] ->
+      (* no acyclic moves; resolve a cyclic move *)
+      (y, sw) :: (x, y) :: shuffle sw (List.map (function y', z when y = y' -> sw, z | yz -> yz) xys)
+    | xys, acyc -> acyc @ shuffle sw xys
 
 type dest = Tail | NonTail of Id.t (* 末尾かどうかを表すデータ型 (caml2html: emit_dest) *)
 
@@ -244,56 +235,43 @@ and g' oc = function (* 各命令のアセンブリ生成 (caml2html: emit_gprim
     then Printf.fprintf oc "\tmovsd\t%s, %s\n" fregs.(0) a
 
 and g'_tail_if oc e1 e2 b bn =
-  let b_else = Id.genid (b ^ "_else") in
-  Printf.fprintf oc "\t%s\t%s\n" bn b_else;
-  let stackset_back = !stackset in
-  g oc (Tail, e1);
-  Printf.fprintf oc "%s:\n" b_else;
-  stackset := stackset_back;
-  g oc (Tail, e2)
+    let b_else = Id.genid (b ^ "_else") in
+    Printf.fprintf oc "\t%s\t%s\n" bn b_else;
+    let stackset_back = !stackset in
+    g oc (Tail, e1);
+    Printf.fprintf oc "%s:\n" b_else;
+    stackset := stackset_back;
+    g oc (Tail, e2)
 
 and g'_non_tail_if oc dest e1 e2 b bn =
-  let b_else = Id.genid (b ^ "_else") in
-  let b_cont = Id.genid (b ^ "_cont") in
-  Printf.fprintf oc "\t%s\t%s\n" bn b_else;
-  let stackset_back = !stackset in
-  g oc (dest, e1);
-  let stackset1 = !stackset in
-  Printf.fprintf oc "\tjmp\t%s\n" b_cont;
-  Printf.fprintf oc "%s:\n" b_else;
-  stackset := stackset_back;
-  g oc (dest, e2);
-  Printf.fprintf oc "%s:\n" b_cont;
-  let stackset2 = !stackset in
-  stackset := S.inter stackset1 stackset2
+    let b_else = Id.genid (b ^ "_else") in
+    let b_cont = Id.genid (b ^ "_cont") in
+    Printf.fprintf oc "\t%s\t%s\n" bn b_else;
+    let stackset_back = !stackset in
+    g oc (dest, e1);
+    let stackset1 = !stackset in
+    Printf.fprintf oc "\tjmp\t%s\n" b_cont;
+    Printf.fprintf oc "%s:\n" b_else;
+    stackset := stackset_back;
+    g oc (dest, e2);
+    Printf.fprintf oc "%s:\n" b_cont;
+    let stackset2 = !stackset in
+    stackset := S.inter stackset1 stackset2
 
 and g'_args oc x_reg_cl ys zs =
-  assert (List.length ys <= Array.length regs - List.length x_reg_cl);
-  assert (List.length zs <= Array.length fregs);
-  let sw = Printf.sprintf "%d(%s)" (stacksize ()) reg_sp in
-  let i, yrs =
-    List.fold_left
-      (fun (i, yrs) y -> i + 1, (y, regs.(i)) :: yrs)
-      (0, x_reg_cl)
-      ys
-  in
-  List.iter
-    (fun (y, r) -> Printf.fprintf oc "\tmovq\t%s, %s\n" y r)
-    (shuffle sw yrs);
-  let d, zfrs =
-    List.fold_left (fun (d, zfrs) z -> d + 1, (z, fregs.(d)) :: zfrs) (0, []) zs
-  in
-  List.iter
-    (fun (z, fr) -> Printf.fprintf oc "\tmovsd\t%s, %s\n" z fr)
-    (shuffle sw zfrs)
-;;
+    assert (List.length ys <= Array.length regs - List.length x_reg_cl);
+    assert (List.length zs <= Array.length fregs);
+    let sw = Printf.sprintf "%d(%s)" (stacksize ()) reg_sp in
+    let i, yrs = List.fold_left (fun (i, yrs) y -> i + 1, (y, regs.(i)) :: yrs) (0, x_reg_cl) ys
+     in List.iter (fun (y, r) -> Printf.fprintf oc "\tmovq\t%s, %s\n" y r) (shuffle sw yrs);
+    let d, zfrs = List.fold_left (fun (d, zfrs) z -> d + 1, (z, fregs.(d)) :: zfrs) (0, []) zs
+     in List.iter (fun (z, fr) -> Printf.fprintf oc "\tmovsd\t%s, %s\n" z fr) (shuffle sw zfrs)
 
 let h oc { name = Id.L x; args = _; fargs = _; body = e; ret = _ } =
-  Printf.fprintf oc "%s:\n" x;
-  stackset := S.empty;
-  stackmap := [];
-  g oc (Tail, e)
-;;
+    Printf.fprintf oc "%s:\n" x;
+    stackset := S.empty;
+    stackmap := [];
+    g oc (Tail, e)
 
 let f oc (Prog (data, fundefs, e)) =
   Format.eprintf "generating assembly...@.";

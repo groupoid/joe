@@ -36,13 +36,13 @@ type value =
   | Array' of value array
 
 module Value = struct
-  let ( |+| ) v1 v2 = match v1, v2 with | Int' i, Int' j -> Int' (i + j) | _ -> failwith "invalid value"
-  let ( |-| ) v1 v2 = match v1, v2 with | Int' i, Int' j -> Int' (i - j) | _ -> failwith "invalid value"
-  let ( |*| ) v1 v2 = match v1, v2 with | Int' i, Int' j -> Int' (i * j) | _ -> failwith "invalid value"
-  let ( |/| ) v1 v2 = match v1, v2 with | Int' i, Int' j -> Int' (i / j) | _ -> failwith "invalid value"
-  let ( |%| ) v1 v2 = match v1, v2 with | Int' i, Int' j -> Int' (i mod j) | _ -> failwith "invalid_arg"
-  let ( |<| ) v1 v2 = match v1, v2 with Int' i, Int' j -> i < j | _ -> failwith "invalid value"
-  let ( |=| ) v1 v2 = match v1, v2 with Int' i, Int' j -> i = j | _ -> failwith "invalid value"
+  let ( |+| ) v1 v2 = match v1, v2 with | Int' i, Int' j -> Int' (i  +  j) | _ -> failwith "invalid value"
+  let ( |-| ) v1 v2 = match v1, v2 with | Int' i, Int' j -> Int' (i  -  j) | _ -> failwith "invalid value"
+  let ( |*| ) v1 v2 = match v1, v2 with | Int' i, Int' j -> Int' (i  *  j) | _ -> failwith "invalid value"
+  let ( |/| ) v1 v2 = match v1, v2 with | Int' i, Int' j -> Int' (i  /  j) | _ -> failwith "invalid value"
+  let ( |%| ) v1 v2 = match v1, v2 with | Int' i, Int' j -> Int' (i mod j) | _ -> failwith "invalid_value"
+  let ( |<| ) v1 v2 = match v1, v2 with | Int' i, Int' j -> i < j          | _ -> failwith "invalid value"
+  let ( |=| ) v1 v2 = match v1, v2 with | Int' i, Int' j -> i = j          | _ -> failwith "invalid value"
 
   let int_of_value = function
     | Int' i -> i
@@ -118,39 +118,24 @@ let make_stack () = 0, Array.make max_stack_depth (Int' 0)
 let fetch code pc = code.(pc), pc + 1
 
 let code_at_pc code pc =
-  if 0 <= pc && pc < Array.length code
-  then
-    Printf.sprintf
-      "code[%d..]=%d %d"
-      pc
-      code.(pc)
-      (if pc + 1 < Array.length code then code.(pc + 1) else -1)
-  else Printf.sprintf "pc=%d" pc
+    if 0 <= pc && pc < Array.length code
+    then Printf.sprintf "code[%d..]=%d %d" pc code.(pc)
+       ( if pc + 1 < Array.length code then code.(pc + 1) else -1 )
+    else Printf.sprintf "pc=%d" pc
 
 let dump_stack (sp, stack) =
-  let rec loop i =
-    if i = sp
-    then ""
-    else
-      (match stack.(i) with Int' i -> string_of_int i | Array' _ -> "array" | String' _ -> "string")
-      ^ ";"
-      ^ loop (i + 1)
-  in
-  "[" ^ loop 0 ^ "]"
+    let rec loop i = if i = sp then "" else
+      ( match stack.(i) with Int' i -> string_of_int i | Array' _ -> "array" | String' _ -> "string" )
+      ^ ";" ^ loop (i + 1) in "[" ^ loop 0 ^ "]"
 
 (* when the VM won't stop, you may turn on the following function to forcingly
    terminate after executing a certain amount of instructions *)
 let checkpoint =
-  if false
-  then (
-    let counter = ref 5000 in
-    fun () ->
-      if !counter = 0 then failwith "expired!" else counter := !counter - 1)
-  else fun () -> ()
+    if false then (let counter = ref 5000 in fun () ->
+       if !counter = 0 then failwith "expired!" else counter := !counter - 1)
+    else fun () -> ()
 
-let debug pc inst stack =
-  with_debug (fun () ->
-      eprintf "%d %s %s\n" (pc - 1) (show_inst inst) (dump_stack stack))
+let debug pc inst stack = with_debug (fun () -> eprintf "%d %s %s\n" (pc - 1) (show_inst inst) (dump_stack stack))
 
 let rec interp code pc stack =
   checkpoint ();

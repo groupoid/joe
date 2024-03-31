@@ -1,5 +1,6 @@
+open MinCaml
 open Asm
-open X64
+open Asm.X64
 
 (* for register coalescing *)
 (* [XXX] Callがあったら、そこから先は無意味というか逆効果なので追わない。

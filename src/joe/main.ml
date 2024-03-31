@@ -28,8 +28,8 @@ let lexbuf oc l =
   |> Simm.f
   |> fun p ->
   match !backend_type with
-  | Intel -> RegAlloc.f p |> X64.Emit.f oc
-  | ARM -> RegAlloc.f p |> Arm64.Emit.f oc
+  | Intel -> X64.RegAlloc.f p |> X64.Emit.f oc
+  | ARM -> Arm64.RegAlloc.f p |> Arm64.Emit.f oc
   | Virtual -> Asm.show_prog p |> Printf.fprintf oc "%s"
 ;;
 
