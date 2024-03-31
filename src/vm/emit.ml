@@ -109,49 +109,26 @@ and compile_exp fname env exp =
   | Set i -> compile_id_or_imm env (C i)
   | Mov var -> compile_id_or_imm env (V var)
   | Neg var -> compile_id_or_imm env (V var) @ [ NEG ]
-  | Add (x, y) ->
-    compile_id_or_imm env (V x) @ compile_id_or_imm (shift_env env) y @ [ ADD ]
-  | Sub (x, y) ->
-    compile_id_or_imm env (V x) @ compile_id_or_imm (shift_env env) y @ [ SUB ]
-  | Mul (x, y) ->
-    compile_id_or_imm env (V x) @ compile_id_or_imm (shift_env env) y @ [ MUL ]
-  | Div (x, y) ->
-    compile_id_or_imm env (V x) @ compile_id_or_imm (shift_env env) y @ [ DIV ]
-  | Mod (x, y) ->
-    compile_id_or_imm env (V x) @ compile_id_or_imm (shift_env env) y @ [ MOD ]
+  | Add (x, y) -> compile_id_or_imm env (V x) @ compile_id_or_imm (shift_env env) y @ [ ADD ]
+  | Sub (x, y) -> compile_id_or_imm env (V x) @ compile_id_or_imm (shift_env env) y @ [ SUB ]
+  | Mul (x, y) -> compile_id_or_imm env (V x) @ compile_id_or_imm (shift_env env) y @ [ MUL ]
+  | Div (x, y) -> compile_id_or_imm env (V x) @ compile_id_or_imm (shift_env env) y @ [ DIV ]
+  | Mod (x, y) -> compile_id_or_imm env (V x) @ compile_id_or_imm (shift_env env) y @ [ MOD ]
   | IfEq (x, y, then_exp, else_exp) ->
-    let l2, l1 = gen_label (), gen_label () in
-    compile_id_or_imm env (V x)
-    @ compile_id_or_imm (shift_env env) y
-    @ [ EQ ]
-    @ [ JUMP_IF_ZERO; Lref l1 ]
-    @ compile_t fname env then_exp
-    @ [ JUMP; Lref l2 ]
-    @ [ Ldef l1 ]
-    @ compile_t fname env else_exp
-    @ [ Ldef l2 ]
+    let l2, l1 = gen_label (), gen_label () in compile_id_or_imm env (V x)
+    @ compile_id_or_imm (shift_env env) y @ [ EQ ] @ [ JUMP_IF_ZERO; Lref l1 ]
+    @ compile_t fname env then_exp @ [ JUMP; Lref l2 ] @ [ Ldef l1 ]
+    @ compile_t fname env else_exp @ [ Ldef l2 ]
   | IfLE (x, y, then_exp, else_exp) ->
-    let l2, l1 = gen_label (), gen_label () in
-    compile_id_or_imm env (V x)
-    @ compile_id_or_imm (shift_env env) y
-    @ [ LT ]
-    @ [ JUMP_IF_ZERO; Lref l1 ]
-    @ compile_t fname env then_exp
-    @ [ JUMP; Lref l2 ]
-    @ [ Ldef l1 ]
-    @ compile_t fname env else_exp
-    @ [ Ldef l2 ]
+    let l2, l1 = gen_label (), gen_label () in compile_id_or_imm env (V x)
+    @ compile_id_or_imm (shift_env env) y @ [ LT ] @ [ JUMP_IF_ZERO; Lref l1 ]
+    @ compile_t fname env then_exp @ [ JUMP; Lref l2 ] @ [ Ldef l1 ]
+    @ compile_t fname env else_exp @ [ Ldef l2 ]
   | IfGE (x, y, then_exp, else_exp) ->
-    let l2, l1 = gen_label (), gen_label () in
-    compile_id_or_imm env (V x)
-    @ compile_id_or_imm (shift_env env) y
-    @ [ GT ]
-    @ [ JUMP_IF_ZERO; Lref l1 ]
-    @ compile_t fname env then_exp
-    @ [ JUMP; Lref l2 ]
-    @ [ Ldef l1 ]
-    @ compile_t fname env else_exp
-    @ [ Ldef l2 ]
+    let l2, l1 = gen_label (), gen_label () in compile_id_or_imm env (V x)
+    @ compile_id_or_imm (shift_env env) y @ [ GT ] @ [ JUMP_IF_ZERO; Lref l1 ]
+    @ compile_t fname env then_exp @ [ JUMP; Lref l2 ] @ [ Ldef l1 ]
+    @ compile_t fname env else_exp @ [ Ldef l2 ]
   | CallDir (Id.L "min_caml_read_int", _, _) -> [ READ_INT ]
   | CallDir (Id.L "min_caml_print_int", [ x ], _) -> compile_id_or_imm env (V x) @ [ PRINT_INT ]
   | CallDir (Id.L "min_caml_read_string", _, _) -> [ READ_STRING ]
@@ -160,23 +137,13 @@ and compile_exp fname env exp =
   | CallDir (Id.L "min_caml_rand_int", [ x ], _) -> compile_id_or_imm env (V x) @ [ RAND_INT ]
   | CallDir (Id.L "min_caml_create_array", [ x; y ], _) -> compile_id_or_imm env (V x) @ compile_id_or_imm (shift_env env) (V y) @ [ ARRAY_MAKE ]
   | CallDir (Id.L var, rands, _) ->
-    (List.fold_left
-       ~f:(fun (rev_code_list, env) v ->
-         compile_id_or_imm env (V v) :: rev_code_list, shift_env env)
-       ~init:([], env)
-       rands
-    |> fst
-    |> List.rev
-    |> List.flatten)
-    @ (if fname = "main" then [ JIT_SETUP ] else [])
-    @ [ CALL; Lref var; Literal (List.length rands) ]
-  | Ld (x, y, _) ->
-    compile_id_or_imm env (V x) @ compile_id_or_imm (shift_env env) y @ [ GET ]
-  | St (x, y, z, _) ->
-    compile_id_or_imm env (V x)
-    @ compile_id_or_imm (shift_env env) (V y)
-    @ compile_id_or_imm (shift_env (shift_env env)) z
-    @ [ PUT ]
+    ( List.fold_left ~f:(fun (rev_code_list, env) v -> compile_id_or_imm env (V v) ::
+      rev_code_list, shift_env env) ~init:([], env) rands |> fst |> List.rev |> List.flatten)
+    @ (if fname = "main" then [ JIT_SETUP ] else []) @ [ CALL; Lref var; Literal (List.length rands) ]
+  | Ld (x, y, _) -> compile_id_or_imm env (V x) @ compile_id_or_imm (shift_env env) y @ [ GET ]
+  | St (x, y, z, _) -> compile_id_or_imm env (V x) @ compile_id_or_imm (shift_env env) (V y) @ compile_id_or_imm (shift_env (shift_env env)) z @ [ PUT ]
+(*  | Slw (x, y, z) -> compile_id_or_imm env (V x) @ compile_id_or_imm (shift_env env) (V y) @ compile_id_or_imm (shift_env (shift_env env)) z @ [ PUT ] *)
+  | Stw (x, y, z) -> compile_id_or_imm env (V x) @ compile_id_or_imm (shift_env env) (V y) @ compile_id_or_imm (shift_env (shift_env env)) z @ [ PUT ]
   | exp -> failwith (Printf.sprintf "un matched pattern: %s" (Asm.show_exp exp))
 ;;
 

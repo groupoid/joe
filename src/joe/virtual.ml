@@ -137,32 +137,18 @@ let rec g env = function (* 式の仮想マシンコード生成 (caml2html: vir
                Let ((x, t), Ld (y, C offset, 1), load))
     in
     load
-  | Closure.Get(x, y) -> (* 配列の読み出し (caml2html: virtual_get) *)
-      let offset = Id.genid "o" in
-      (match M.find x env with
-      | Type.Array(Type.Unit) -> Ans(Nop)
-      | Type.Array(Type.Float) ->
-          (* float の Array は1要素で8バイトなので、渡されたインデックス値を8倍したものをオフセットとする *)
-          Let((offset, Type.Int), Slw(y, C(3)),
-              Ans(Lfd(x, V(offset))))
-      | Type.Array(_) ->
-          (* int の Array は1要素で8バイトなので、渡されたインデックス値を8倍したものをオフセットとする *)
-          Let((offset, Type.Int), Slw(y, C(3)),
-              Ans(Lwz(x, V(offset))))
-      | _ -> assert false)
-  | Closure.Put(x, y, z) ->
-      let offset = Id.genid "o" in
-      (match M.find x env with
-      | Type.Array(Type.Unit) -> Ans(Nop)
-      | Type.Array(Type.Float) ->
-          (* float の Array は1要素で8バイトなので、渡されたインデックス値を8倍したものをオフセットとする *)
-          Let((offset, Type.Int), Slw(y, C(3)),
-              Ans(Stfd(z, x, V(offset))))
-      | Type.Array(_) ->
-          (* int の Array は1要素で8バイトなので、渡されたインデックス値を8倍したものをオフセットとする *)
-          Let((offset, Type.Int), Slw(y, C(3)),
-              Ans(Stw(z, x, V(offset))))
-      | _ -> assert false)
+  | Closure.Get (x, y) -> (* 配列の読み出し (caml2html: virtual_get) *)
+    (match M.find x env with
+    | Type.Array Type.Unit -> Ans Nop
+    | Type.Array Type.Float -> Ans (LdDF (x, V y, 8))
+    | Type.Array _ -> Ans (Ld (x, V y, 4))
+    | _ -> assert false)
+  | Closure.Put (x, y, z) ->
+    (match M.find x env with
+    | Type.Array Type.Unit -> Ans Nop
+    | Type.Array Type.Float -> Ans (StDF (z, x, V y, 8))
+    | Type.Array _ -> Ans (St (z, x, V y, 4))
+    | _ -> assert false)
   | Closure.ExtArray (Id.L x) -> Ans (SetL (Id.L ("min_caml_" ^ x)))
 ;;
 
