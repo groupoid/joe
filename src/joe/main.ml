@@ -63,7 +63,7 @@ let () =
       ( "-ast",    Arg.Unit (fun _ -> ast_dump := true), "emit abstract syntax tree" ) ;
       ( "-intel" , Arg.Unit (fun _ -> backend_type := Intel) , "emit EM64T machine code" ) ;
       ( "-arm" ,   Arg.Unit (fun _ -> backend_type := ARM) , "emit AArch64 machine code" ) ;
-      ( "-vm" ,    Arg.Unit (fun _ -> backend_type := Virtual) , "emit MinCaml IR virtual machine (joevm)" ) ;
+      ( "-vm" ,    Arg.Unit (fun _ -> backend_type := Virtual) , "emit MinCaml IR virtual machine" ) ;
       ( "-debug",  Arg.Unit (fun _ -> debug := true), "enable debug mode" )
     ]
     (fun s -> files := !files @ [ s ])
