@@ -1,9 +1,9 @@
 open MinCaml
 
 type backend =
-  | Intel
-  | ARM
-  | Virtual
+   | Intel
+   | ARM
+   | Virtual
 
 let backend_type = ref Intel
 let debug = ref false
@@ -58,13 +58,14 @@ let main f =
 let () =
   let files = ref [] in
   Arg.parse
-    [ ( "-inline", Arg.Int  (fun i -> Inline.threshold := i) , "maximum size of functions inlined" ) ;
-      ( "-iter",   Arg.Int  (fun i -> Util.limit := i), "maximum number of optimizations iterated" ) ;
-      ( "-ast",    Arg.Unit (fun _ -> ast_dump := true), "emit abstract syntax tree" ) ;
-      ( "-intel" , Arg.Unit (fun _ -> backend_type := Intel) , "emit EM64T machine code" ) ;
-      ( "-arm" ,   Arg.Unit (fun _ -> backend_type := ARM) , "emit AArch64 machine code" ) ;
-      ( "-vm" ,    Arg.Unit (fun _ -> backend_type := Virtual) , "emit MinCaml IR virtual machine" ) ;
-      ( "-debug",  Arg.Unit (fun _ -> debug := true), "enable debug mode" )
+    [ ( "-inline",  Arg.Int  (fun i -> Inline.threshold := i) , "maximum size of functions inlined" ) ;
+      ( "-iter",    Arg.Int  (fun i -> Util.limit := i), "maximum number of optimizations iterated" ) ;
+      ( "-ast",     Arg.Unit (fun _ -> ast_dump := true), "emit abstract syntax tree" ) ;
+      ( "-intel32", Arg.Unit (fun _ -> backend_type := Intel) , "emit IA32 machine code" ) ;
+      ( "-intel64", Arg.Unit (fun _ -> backend_type := Intel) , "emit EM64T machine code" ) ;
+      ( "-arm" ,    Arg.Unit (fun _ -> backend_type := ARM) , "emit AArch64 machine code" ) ;
+      ( "-vm" ,     Arg.Unit (fun _ -> backend_type := Virtual) , "emit MinCaml IR virtual machine" ) ;
+      ( "-debug",   Arg.Unit (fun _ -> debug := true), "enable debug mode" )
     ]
     (fun s -> files := !files @ [ s ])
     ("MinCaml EM64T/AArch64/IR Compiler (c) 2024 Namdak Tonpa\n"
