@@ -1,4 +1,4 @@
-Joe: MinCaml Compiler and Virtual Machine
+Joe: MinCaml compiler and virtual machine
 =========================================
 
 Features
@@ -41,6 +41,8 @@ Resources
 * <a href="https://tonpa.guru/stream/2024/2024-03-30%20Інформатика.htm">М. Сохацький. Інформатика</a>.
 * <a href="https://www.cs.cmu.edu/~rwh/students/okasaki.pdf">C. Okasaki. Purely Functional Data Structures</a>.
 * <a href="https://www.cs.cmu.edu/~rwh/isml/book.pdf">R. Harper. Programming in Standard ML</a>.
+* Andrew W. Appel. Modern Compiler Implementation in ML.
+* Andreas Rossberg. HaMLet: To Be Or Not To Be Standard ML.
 
 Credits
 -------
