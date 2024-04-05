@@ -40,8 +40,8 @@ let main f =
   let outchan =
     let f = Filename.remove_extension f in
     match !backend_type with
-    | Intel -> open_out (f ^ ".s")
-    | ARM -> open_out (f ^ ".arm")
+    | Intel -> open_out (f ^ ".intel.s")
+    | ARM -> open_out (f ^ ".arm.s")
     | _ -> stdout
   in
   try

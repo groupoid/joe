@@ -22,14 +22,31 @@ $ dune build
 Samples
 -------
 
+Execute sample (MinCaml) in VM:
+
 ```sh
-_build/install/default/bin/vm -no-sh -interp examples/ack.ml
+$ _build/install/default/bin/vm -no-sh -interp examples/ack.ml
 509
 ```
 
+Compile sample for Apple M1 (from MinCaml to Assembler):
+
+```sh
+$ _build/install/default/bin/joe -arm examples/ack.ml
+Generating assembly...OK
 ```
-_build/install/default/bin/joe -intel examples/ack.ml
-generating assembly...OK
+
+Compile assembler and link for macOS:
+
+```sh
+$ gcc examples/ack.arm.s src/arm64/libmincaml.c src/arm64/stub.c -o ack
+```
+
+Run sample natively on M1:
+
+```sh
+$ ./ack
+509
 ```
 
 Resources

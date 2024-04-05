@@ -139,6 +139,7 @@ let rec fv_exp = function
   (* uniq here just for efficiency *)
   | CallCls (x, ys, zs) -> (x :: ys) @ zs
   | CallDir (_, ys, zs) -> ys @ zs
+  | _ -> []
 
 and fv = function
   | Ans exp -> fv_exp exp

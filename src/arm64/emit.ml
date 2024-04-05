@@ -69,6 +69,7 @@ and g' oc = function (* 各命令のアセンブリ生成 (caml2html: emit_gprim
       Printf.fprintf oc "\tmovk %s, %d, lsl 16\n" (reg x) b;
       Printf.fprintf oc "\tmovk %s, %d, lsl 32\n" (reg x) c;
       Printf.fprintf oc "\tmovk %s, %d, lsl 48\n" (reg x) d
+  | NonTail(x), Set(i) -> Printf.fprintf oc "\tmov %s, %d\n" (reg x) i
   | NonTail(x), FLi(Id.L(l)) ->
       (* ラベル l に格納された浮動小数点数をレジスタへロードする *)
       Printf.fprintf oc "\tadrp %s, %s@PAGE\n" (reg reg_tmp) l;
@@ -281,7 +282,7 @@ let h oc { name = Id.L(x); args = _; fargs = _; body = e; ret = _ } =
   g oc (Tail, e)
 
 let f oc (Prog(data, fundefs, e)) =
-  Format.eprintf "generating assembly...@.";
+  Format.eprintf "Generating assembly...@.";
   if data <> [] then
     (Printf.fprintf oc "\t.data\n\t.literal8\n";
      List.iter
@@ -295,7 +296,7 @@ let f oc (Prog(data, fundefs, e)) =
   Printf.fprintf oc "\t.globl _min_caml_start\n";
   Printf.fprintf oc "\t.align 2\n";
   List.iter (fun fundef -> h oc fundef) fundefs;
-  Printf.fprintf oc "_min_caml_start: # main entry point\n";
+  Printf.fprintf oc "_min_caml_start:\n";
   (* sp と hp を設定 *)
   Printf.fprintf oc "\tadd %s, %s, 0\n" (reg reg_sp) (reg "%x0");
   Printf.fprintf oc "\tadd %s, %s, 0\n" (reg reg_hp) (reg "%x1");

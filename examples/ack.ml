@@ -3,4 +3,6 @@ let rec ack x y =
   if y = 0 then ack (x-1) 1 else
   ack (x-1) (ack x (y-1)) in
 let a = print_int(ack 3 6) in
-let _ = print_newline();
+print_newline()
+
+

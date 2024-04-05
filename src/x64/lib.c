@@ -6,7 +6,7 @@ void min_caml_print_int(long n) asm("min_caml_print_int");
 void min_caml_print_newline() asm("min_caml_print_newline");
 long* min_caml_create_array(long number_of_element, long init_value) asm("min_caml_create_array");
 double* min_caml_create_float_array(long number_of_element, double float_value) asm("min_caml_create_float_array");
-long min_caml_truncate(double d) asm("min_caml_truncate");
+long min_caml_truncate() asm("min_caml_truncate");
 void min_caml_print_float(double d) asm("min_caml_print_float");
 void min_caml_print_byte(long n) asm("min_caml_print_byte");
 long min_caml_read_int() asm("min_caml_read_int");
