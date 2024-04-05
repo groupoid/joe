@@ -1,4 +1,4 @@
-let sh_flg = ref true
+let sh_flg = ref false
 let vm_debug_flg = ref false
 let tail_opt_flg = ref true
 let frame_reset_flg = ref true

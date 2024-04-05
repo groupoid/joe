@@ -25,15 +25,15 @@ Samples
 Compile sample for MinCaml bytecode:
 
 ```sh
-$ _build/install/default/bin/vm -compile examples/ack.ml
-509
+$ _build/install/default/bin/vm -compile examples/fact.ml
 ```
 
 Run sample from MinCaml bytecode in VM interpreter:
 
 ```sh
-$ _build/install/default/bin/vm -exec examples/ack.ml
-509
+$ _build/install/default/bin/vm -exec examples/fact.joe
+10
+3628800
 ```
 
 Compile sample for Apple M1 (from MinCaml to Assembler):

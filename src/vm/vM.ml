@@ -4,13 +4,10 @@ open Config
 open Insts
 open Stdlib
 
-let max_stack_depth = 10000000
+let max_stack_depth = 100000
 
-(* run the given program by calling the function id 0 *)
-type fundef_bin_t = int array
-
-(* convert the given program into binary, and then run *)
-type fundef_asm_t = inst array
+type fundef_bin_t = int array (* run the given program by calling the function id 0 *)
+type fundef_asm_t = inst array (* convert the given program into binary, and then run *)
 
 let with_debug f = match !vm_debug_flg with true -> f () | false -> ()
 
@@ -160,9 +157,7 @@ let rec interp code pc stack =
       interp code (pc + 1) stack
     | NOT ->
       let v, stack = pop stack in
-      let stack =
-        if int_of_value v = 0 then push stack (Int' 1) else push stack (Int' 0)
-      in
+      let stack = if int_of_value v = 0 then push stack (Int' 1) else push stack (Int' 0) in
       interp code pc stack
     | NEG ->
       let v, stack = pop stack in
@@ -281,9 +276,7 @@ let rec interp code pc stack =
     | ARRAY_MAKE ->
       let init, stack = pop stack in
       let size, stack = pop stack in
-      let stack =
-        push stack (value_of_array (Array.make (int_of_value size) init))
-      in
+      let stack = push stack (value_of_array (Array.make (int_of_value size) init)) in
       interp code pc stack
     | GET ->
       let n, stack = pop stack in
@@ -320,19 +313,16 @@ let rec interp code pc stack =
       interp code pc stack
     | PRINT_STRING ->
       let s, stack = pop stack in
-      let v = string_of_value s in
-      print_string v;
+      let v = string_of_value s in print_string v;
       let stack = v |> String.length |> value_of_int |> push stack in
       interp code pc stack
     | METHOD_COMP | TRACING_COMP | METHOD_ENTRY | JIT_SETUP -> interp code pc stack
     | _ -> failwith (sprintf "un matched pattern: %s" (show_inst inst))
-  with | e -> (value_of_int (-987))
-
+  with | e -> raise e
 
 let run_bin : fundef_bin_t -> int = fun fundefs ->
     let open Value in
     let stack = push (make_stack ()) (value_of_int (-987)) in
     int_of_value @@ interp fundefs 0 stack
-
 
 let run_asm : fundef_asm_t -> int = fun fundefs -> run_bin (Array.map int_of_inst fundefs)

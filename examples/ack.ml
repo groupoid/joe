@@ -1,6 +1,6 @@
-let rec ack x y =
-  if x = 0 then y + 1 else
-  if y = 0 then ack (x-1) 1 else
-  ack (x-1) (ack x (y-1)) in
-let a = print_int(ack 1 1) in
-let _ = print_int(a) in print_newline()
+let rec ack m n =
+    if m = 0 then n + 1 else
+    if n = 0 then ack (m-1) 1 else ack (m-1) (ack m (n-1)) in
+let res = ack 3 3 in
+let _ = print_int res in
+    print_newline()

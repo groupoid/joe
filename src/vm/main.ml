@@ -1,7 +1,6 @@
 open MinCaml
 open Format
 open Printf
-module B = BacCaml
 
 type backend = Compile | Interpret | Nothing
 
@@ -10,69 +9,62 @@ let show_insts_map_type = ref false
 let debug_flg = ref false
 
 let with_debug f =
-  match !debug_flg with
-  | true ->
-    BacCaml.Config.vm_debug_flg := true;
-    f ()
-  | false -> f ()
-;;
+    match !debug_flg with
+    | true -> BacCaml.Config.vm_debug_flg := true; f ()
+    | false -> f ()
 
 let with_show_insts f =
-  match !show_insts_map_type with
-  | true -> BacCaml.Insts.Printer.pp_inst_map ()
-  | false -> f ()
-;;
+    match !show_insts_map_type with
+    | true -> BacCaml.Insts.Printer.pp_inst_map ()
+    | false -> f ()
 
-let rec lexbuf l =
-  let open B in
-  (Parser.exp Lexer.token l)
-  |> Typing.f
-  |> KNormal.f
-  |> Alpha.f
-  |> Util.(iter !limit)
-  |> Closure.f
-  |> Virtual.f
-  |> Simm.f
+let rec normalForm l =
+    let open BacCaml in
+    let expression = Parser.exp Lexer.token l in
+    expression |> Typing.f
+               |> KNormal.f
+               |> Alpha.f
+               |> Util.(iter !limit)
+               |> Closure.f
+               |> Virtual.f
+               |> Simm.f
 
-let parseML ic =
-    let input = Lexing.from_channel ic in
-    let res = lexbuf input in
-    let _ = close_in ic in res
+let compileSource ml =
+    let input = Lexing.from_channel ml in
+    let res = normalForm input in
+    let _ = close_in ml in res
 
 let main f =
-    let open B in
+    let r x = match x with
+              | BacCaml.Insts.Literal i -> Printf.printf "%d;" i
+              | _ -> Printf.printf "%d;" (BacCaml.Insts.index_of x) in
     Id.counter := 0;
     Typing.extenv := M.empty;
-    try
-      let r x = match x with
-              | BacCaml.Insts.Literal i -> Printf.printf "%d;" i
-              | _ -> Printf.printf "%d;" (Insts.index_of x) in
-      match !backend_type with
+    try match !backend_type with
       | Interpret ->
         let joe = open_in_bin ((Filename.remove_extension f) ^ ".joe") in
-        let insts = (Marshal.from_channel joe) in
-            VM.run_asm insts ; close_in joe ; ()
+        let insts = (Marshal.from_channel joe) in BacCaml.VM.run_asm insts ; close_in joe
       | Compile ->
         let ml  = open_in ((Filename.remove_extension f) ^ ".ml") in
         let vm  = open_out_bin ((Filename.remove_extension f) ^ ".joe") in
-        let insts = (BacCaml.Emit.f (parseML ml)) in
-            Stdlib.output_bytes vm (Marshal.to_bytes insts [Marshal.No_sharing])
-        ; close_in ml ; close_out vm
+        let insts = (BacCaml.Emit.f (compileSource ml)) in
+            Stdlib.output_bytes vm (Marshal.to_bytes insts [Marshal.No_sharing]) ; close_out vm
       | Nothing -> ()
-    with | e -> raise e
+    with | Invalid_argument _ -> ()
+         | e -> raise e
 
 let () =
   let files = ref [] in
-  B.(
+  BacCaml.(
     Arg.parse
       [ ( "-debug", Arg.Unit (fun _ -> debug_flg := true), "run as debug mode" ) ;
         ( "-compile", Arg.Unit (fun _ ->  backend_type := Compile), "emit MinCaml IR" ) ;
-        ( "-exec", Arg.Unit (fun _ -> Config.(sh_flg := false); backend_type := Interpret), "run IR in VM interpreter" ) ;
-        ( "-no-tail", Arg.Unit (fun _ -> Config.(tail_opt_flg := false)) , "disable optimization for tail-recursive call") ;
+        ( "-exec", Arg.Unit (fun _ -> backend_type := Interpret), "run IR in VM interpreter" ) ;
+        ( "-no-tail", Arg.Unit (fun _ -> Config.tail_opt_flg := false), "disable optimization for tail-recursive call") ;
         ( "-no-fr", Arg.Unit (fun _ -> Config.frame_reset_flg := false), "disable to emit frame_reset" ) 
       ])
     (fun s -> files := !files @ [ s ])
     ( "MinCaml IR Virtual Machine (c) 2024 Namdak Tonpa\n"
     ^ "usage: vm [-options] filenames");
   with_show_insts (fun _ -> with_debug (fun _ -> List.iter main !files))
-;;
+
