@@ -1,12 +1,13 @@
 open MinCaml
 open BacCaml
+open Stdlib
 
 type backend =
    | Intel
    | ARM
    | Virtual
 
-let backend_type = ref Intel
+let backend_type = ref ARM
 let debug = ref false
 let ast_dump = ref false
 let with_flag flag ~tru:f ~fls:g = if !flag then f () else g ()
@@ -35,14 +36,16 @@ let lexbuf oc l =
 
 let string s = lexbuf stdout (Lexing.from_string s)
 
+let open_rewrite f = open_out_gen [Open_binary;Open_wronly;Open_creat] 0o644 f 
+
 let main f =
   let inchan = open_in f in
   let outchan =
     let f = Filename.remove_extension f in
     match !backend_type with
-    | Intel -> open_out (f ^ ".intel.s")
-    | ARM -> open_out (f ^ ".arm.s")
-    | Virtual -> open_out_bin (f ^ ".joe")
+    | Intel   -> open_rewrite (f ^ ".intel.s")
+    | ARM     -> open_rewrite (f ^ ".arm.s")
+    | Virtual -> open_rewrite (f ^ ".joe")
   in
   try
     let input = Lexing.from_channel inchan in
@@ -61,8 +64,8 @@ let () =
     [ ( "-inline",  Arg.Int  (fun i -> Inline.threshold := i) , "maximum size of functions inlined" ) ;
       ( "-iter",    Arg.Int  (fun i -> Util.limit := i), "maximum number of optimizations iterated" ) ;
       ( "-ast",     Arg.Unit (fun _ -> ast_dump := true), "emit abstract syntax tree" ) ;
-      ( "-intel32", Arg.Unit (fun _ -> backend_type := Intel) , "emit IA32 machine code" ) ;
-      ( "-intel64", Arg.Unit (fun _ -> backend_type := Intel) , "emit EM64T machine code" ) ;
+      ( "-x86",     Arg.Unit (fun _ -> backend_type := Intel) , "emit IA32 machine code" ) ;
+      ( "-x64",     Arg.Unit (fun _ -> backend_type := Intel) , "emit EM64T machine code" ) ;
       ( "-arm" ,    Arg.Unit (fun _ -> backend_type := ARM) , "emit AArch64 machine code" ) ;
       ( "-vm" ,     Arg.Unit (fun _ -> backend_type := Virtual) , "emit MinCaml IR virtual machine" ) ;
       ( "-debug",   Arg.Unit (fun _ -> debug := true), "enable debug mode" )

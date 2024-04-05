@@ -1,44 +1,43 @@
 type closure =
-  { entry : Id.l
-  ; actual_fv : Id.t list
-  }
+   { entry : Id.l
+   ; actual_fv : Id.t list
+   }
 
-type t =
-  (* ¥¯¥í¡¼¥¸¥ãÊÑ´¹¸å¤Î¼° (caml2html: closure_t) *)
-  | Unit
-  | Int of int
-  | Float of float
-  | Neg of Id.t
-  | Add of Id.t * Id.t
-  | Sub of Id.t * Id.t
-  | Mul of Id.t * Id.t
-  | Div of Id.t * Id.t
-  | Mod of Id.t * Id.t
-  | FNeg of Id.t
-  | FAdd of Id.t * Id.t
-  | FSub of Id.t * Id.t
-  | FMul of Id.t * Id.t
-  | FDiv of Id.t * Id.t
-  | IfEq of Id.t * Id.t * t * t
-  | IfLE of Id.t * Id.t * t * t
-  | Let of (Id.t * Type.t) * t * t
-  | Var of Id.t
-  | MakeCls of (Id.t * Type.t) * closure * t
-  | AppCls of Id.t * Id.t list
-  | AppDir of Id.l * Id.t list
-  | Tuple of Id.t list
-  | LetTuple of (Id.t * Type.t) list * Id.t * t
-  | Get of Id.t * Id.t
-  | Put of Id.t * Id.t * Id.t
-  | ExtArray of Id.l
+type t = (* ã‚¯ãƒ­ãƒ¼ã‚¸ãƒ£å¤‰æ›å¾Œã®å¼ (caml2html: closure_t) *)
+   | Unit
+   | Int of int
+   | Float of float
+   | Neg of Id.t
+   | Add of Id.t * Id.t
+   | Sub of Id.t * Id.t
+   | Mul of Id.t * Id.t
+   | Div of Id.t * Id.t
+   | Mod of Id.t * Id.t
+   | FNeg of Id.t
+   | FAdd of Id.t * Id.t
+   | FSub of Id.t * Id.t
+   | FMul of Id.t * Id.t
+   | FDiv of Id.t * Id.t
+   | IfEq of Id.t * Id.t * t * t
+   | IfLE of Id.t * Id.t * t * t
+   | Let of (Id.t * Type.t) * t * t
+   | Var of Id.t
+   | MakeCls of (Id.t * Type.t) * closure * t
+   | AppCls of Id.t * Id.t list
+   | AppDir of Id.l * Id.t list
+   | Tuple of Id.t list
+   | LetTuple of (Id.t * Type.t) list * Id.t * t
+   | Get of Id.t * Id.t
+   | Put of Id.t * Id.t * Id.t
+   | ExtArray of Id.l
 
 type fundef =
-  { name : Id.l * Type.t
-  ; args : (Id.t * Type.t) list
-  ; formal_fv : (Id.t * Type.t) list
-  ; body : t
-  ; mutable annot : [ `TJ | `MJ ] option
-  }
+   { name : Id.l * Type.t
+   ; args : (Id.t * Type.t) list
+   ; formal_fv : (Id.t * Type.t) list
+   ; body : t
+   ; mutable annot : [ `TJ | `MJ ] option
+   }
 
 type prog = Prog of fundef list * t
 
@@ -54,25 +53,19 @@ let rec fv = function
   | FSub (x, y)
   | FMul (x, y)
   | FDiv (x, y)
-  | Get (x, y) ->
-    S.of_list [ x; y ]
-  | IfEq (x, y, e1, e2) | IfLE (x, y, e1, e2) ->
-    S.add x (S.add y (S.union (fv e1) (fv e2)))
+  | Get (x, y) -> S.of_list [ x; y ]
+  | IfEq (x, y, e1, e2) | IfLE (x, y, e1, e2) -> S.add x (S.add y (S.union (fv e1) (fv e2)))
   | Let ((x, t), e1, e2) -> S.union (fv e1) (S.remove x (fv e2))
   | Var x -> S.singleton x
-  | MakeCls ((x, t), { entry = l; actual_fv = ys }, e) ->
-    S.remove x (S.union (S.of_list ys) (fv e))
+  | MakeCls ((x, t), { entry = l; actual_fv = ys }, e) -> S.remove x (S.union (S.of_list ys) (fv e))
   | AppCls (x, ys) -> S.of_list (x :: ys)
   | AppDir (_, xs) | Tuple xs -> S.of_list xs
-  | LetTuple (xts, y, e) ->
-    S.add y (S.diff (fv e) (S.of_list (List.map fst xts)))
+  | LetTuple (xts, y, e) -> S.add y (S.diff (fv e) (S.of_list (List.map fst xts)))
   | Put (x, y, z) -> S.of_list [ x; y; z ]
-;;
 
 let toplevel : fundef list ref = ref []
 
-let rec g env known = function
-  (* ¥¯¥í¡¼¥¸¥ãÊÑ´¹¥ë¡¼¥Á¥óËÜÂÎ (caml2html: closure_g) *)
+let rec g env known = function (* ã‚¯ãƒ­ãƒ¼ã‚¸ãƒ£å¤‰æ›ãƒ«ãƒ¼ãƒãƒ³æœ¬ä½“ (caml2html: closure_g) *)
   | KNormal.Unit -> Unit
   | KNormal.Int i -> Int i
   | KNormal.Float d -> Float d
@@ -89,67 +82,44 @@ let rec g env known = function
   | KNormal.FDiv (x, y) -> FDiv (x, y)
   | KNormal.IfEq (x, y, e1, e2) -> IfEq (x, y, g env known e1, g env known e2)
   | KNormal.IfLE (x, y, e1, e2) -> IfLE (x, y, g env known e1, g env known e2)
-  | KNormal.Let ((x, t), e1, e2) ->
-    Let ((x, t), g env known e1, g (M.add x t env) known e2)
+  | KNormal.Let ((x, t), e1, e2) -> Let ((x, t), g env known e1, g (M.add x t env) known e2)
   | KNormal.Var x -> Var x
-  | KNormal.LetRec
-      ({ KNormal.name = x, t; KNormal.args = yts; KNormal.body = e1; annot }, e2)
-    ->
+  | KNormal.LetRec ({ KNormal.name = x, t; KNormal.args = yts; KNormal.body = e1; annot }, e2) ->
+     (* é–¢æ•°å®šç¾©ã®å ´åˆ (caml2html: closure_letrec) *)
+     (* é–¢æ•°å®šç¾©let rec x y1 ... yn = e1 in e2ã®å ´åˆã¯ã€
+        xã«è‡ªç”±å¤‰æ•°ãŒãªã„(closureã‚’ä»‹ã•ãšdirectã«å‘¼ã³å‡ºã›ã‚‹) 
+        ã¨ä»®å®šã—ã€knownã«è¿½åŠ ã—ã¦e1ã‚’ã‚¯ãƒ­ãƒ¼ã‚¸ãƒ£å¤‰æ›ã—ã¦ã¿ã‚‹ *)
     let toplevel_backup = !toplevel in
     let env' = M.add x t env in
     let known' = S.add x known in
     let e1' = g (M.add_list yts env') known' e1 in
+     (* æœ¬å½“ã«è‡ªç”±å¤‰æ•°ãŒãªã‹ã£ãŸã‹ã€å¤‰æ›çµæžœe1'ã‚’ç¢ºèªã™ã‚‹ *)
+     (* æ³¨æ„: e1'ã«xè‡ªèº«ãŒå¤‰æ•°ã¨ã—ã¦å‡ºç¾ã™ã‚‹å ´åˆã¯closureãŒå¿…è¦!
+     (thanks to nuevo-namasute and azounoman; test/cls-bug2.mlå‚ç…§) *)
     let zs = S.diff (fv e1') (S.of_list (List.map fst yts)) in
-    let known', e1' =
-      if S.is_empty zs
-      then known', e1'
-      else (
-        (* ÂÌÌÜ¤À¤Ã¤¿¤é¾õÂÖ(toplevel¤ÎÃÍ)¤òÌá¤·¤Æ¡¢¥¯¥í¡¼¥¸¥ãÊÑ´¹¤ò¤ä¤êÄ¾¤¹ *)
-        Format.eprintf
-          "free variable(s) %s found in function %s@."
-          (Id.pp_list (S.elements zs))
-          x;
-        Format.eprintf "function %s cannot be directly applied in fact@." x;
-        toplevel := toplevel_backup;
-        let e1' = g (M.add_list yts env') known e1 in
-        known, e1')
-    in
-    let zs =
-      S.elements (S.diff (fv e1') (S.add x (S.of_list (List.map fst yts))))
-    in
-    (* ¼«Í³ÊÑ¿ô¤Î¥ê¥¹¥È *)
-    let zts = List.map (fun z -> z, M.find z env') zs in
-    (* ¤³¤³¤Ç¼«Í³ÊÑ¿ôz¤Î·¿¤ò°ú¤¯¤¿¤á¤Ë°ú¿ôenv¤¬É¬Í× *)
-    toplevel
-      := { name = Id.L x, t; args = yts; formal_fv = zts; body = e1'; annot }
-         :: !toplevel;
-    (* ¥È¥Ã¥×¥ì¥Ù¥ë´Ø¿ô¤òÄÉ²Ã *)
+    let known', e1' = if S.is_empty zs then known', e1' else
+        (* é§„ç›®ã ã£ãŸã‚‰çŠ¶æ…‹(toplevelã®å€¤)ã‚’æˆ»ã—ã¦ã€ã‚¯ãƒ­ãƒ¼ã‚¸ãƒ£å¤‰æ›ã‚’ã‚„ã‚Šç›´ã™ *)
+        ( Format.eprintf "free variable(s) %s found in function %s@." (Id.pp_list (S.elements zs)) x;
+          Format.eprintf "function %s cannot be directly applied in fact@." x;
+          toplevel := toplevel_backup; let e1' = g (M.add_list yts env') known e1 in known, e1' ) in
+    let zs = S.elements (S.diff (fv e1') (S.add x (S.of_list (List.map fst yts)))) in (* è‡ªç”±å¤‰æ•°ã®ãƒªã‚¹ãƒˆ *)
+    let zts = List.map (fun z -> z, M.find z env') zs in (* ã“ã“ã§è‡ªç”±å¤‰æ•°zã®åž‹ã‚’å¼•ããŸã‚ã«å¼•æ•°envãŒå¿…è¦ *)
+    toplevel := { name = Id.L x, t; args = yts; formal_fv = zts; body = e1'; annot } :: !toplevel; (* ãƒˆãƒƒãƒ—ãƒ¬ãƒ™ãƒ«é–¢æ•°ã‚’è¿½åŠ  *)
     let e2' = g env' known' e2 in
-    if S.mem x (fv e2')
-    then
-      (* x¤¬ÊÑ¿ô¤È¤·¤Æe2'¤Ë½Ð¸½¤¹¤ë¤« *)
-      MakeCls ((x, t), { entry = Id.L x; actual_fv = zs }, e2')
-      (* ½Ð¸½¤·¤Æ¤¤¤¿¤éºï½ü¤·¤Ê¤¤ *)
-    else (
-      Format.eprintf "eliminating closure(s) %s@." x;
-      e2')
-  (* ½Ð¸½¤·¤Ê¤±¤ì¤ÐMakeCls¤òºï½ü *)
-  | KNormal.App (x, ys) when S.mem x known ->
-    (* ´Ø¿ôÅ¬ÍÑ¤Î¾ì¹ç (caml2html: closure_app) *)
-    Format.eprintf "directly applying %s@." x;
-    AppDir (Id.L x, ys)
+    if S.mem x (fv e2') then (* xãŒå¤‰æ•°ã¨ã—ã¦e2'ã«å‡ºç¾ã™ã‚‹ã‹ *)
+       MakeCls ((x, t), { entry = Id.L x; actual_fv = zs }, e2') (* å‡ºç¾ã—ã¦ã„ãŸã‚‰å‰Šé™¤ã—ãªã„ *)
+    else (Format.eprintf "eliminating closure(s) %s@." x; e2') (* å‡ºç¾ã—ãªã‘ã‚Œã°MakeClsã‚’å‰Šé™¤ *)
+  | KNormal.App (x, ys) when S.mem x known -> (* é–¢æ•°é©ç”¨ã®å ´åˆ (caml2html: closure_app) *)
+    Format.eprintf "directly applying %s@." x; AppDir (Id.L x, ys)
   | KNormal.App (f, xs) -> AppCls (f, xs)
   | KNormal.Tuple xs -> Tuple xs
-  | KNormal.LetTuple (xts, y, e) ->
-    LetTuple (xts, y, g (M.add_list xts env) known e)
+  | KNormal.LetTuple (xts, y, e) -> LetTuple (xts, y, g (M.add_list xts env) known e)
   | KNormal.Get (x, y) -> Get (x, y)
   | KNormal.Put (x, y, z) -> Put (x, y, z)
   | KNormal.ExtArray x -> ExtArray (Id.L x)
   | KNormal.ExtFunApp (x, ys) -> AppDir (Id.L ("min_caml_" ^ x), ys)
-;;
 
 let f e =
-  toplevel := [];
-  let e' = g M.empty S.empty e in
-  Prog (List.rev !toplevel, e')
-;;
+    toplevel := [];
+    let e' = g M.empty S.empty e in
+    Prog (List.rev !toplevel, e')

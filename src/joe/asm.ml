@@ -114,12 +114,12 @@ module ARM64 = struct
   let reg_tmp = "%x26" (* [XX] ad hoc *)
   let is_reg x = (x.[0] = '%')
 end
+
 (* super-tenuki *)
 let rec remove_and_uniq xs = function
   | [] -> []
   | x :: ys when S.mem x xs -> remove_and_uniq xs ys
   | x :: ys -> x :: remove_and_uniq (S.add x xs) ys
-;;
 
 (* free variables in the order of use (for spilling) (caml2html: sparcasm_fv) *)
 let fv_id_or_imm = function V x -> [ x ] | _ -> []
@@ -144,7 +144,6 @@ let rec fv_exp = function
 and fv = function
   | Ans exp -> fv_exp exp
   | Let ((x, t), exp, e) -> fv_exp exp @ remove_and_uniq (S.singleton x) (fv e)
-;;
 
 let fv e = remove_and_uniq S.empty (fv e)
 
@@ -152,7 +151,6 @@ let rec concat e1 xt e2 =
   match e1 with
   | Ans exp -> Let (xt, exp, e2)
   | Let (yt, exp, e1') -> Let (yt, exp, concat e1' xt e2)
-;;
 
 let align i = if i mod 8 = 0 then i else i + 4
 
@@ -169,4 +167,3 @@ let rec localvs_exp = function
 and localvs = function
   | Ans exp -> localvs_exp exp
   | Let (xt, exp, e) -> (xt :: localvs_exp exp) @ localvs e
-;;

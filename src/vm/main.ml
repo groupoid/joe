@@ -1,5 +1,5 @@
 open MinCaml
-open Format
+open Stdlib
 open Printf
 
 type backend = Compile | Interpret | Nothing
@@ -46,7 +46,8 @@ let main f =
         let insts = (Marshal.from_channel joe) in BacCaml.VM.run_asm insts ; close_in joe
       | Compile ->
         let ml  = open_in ((Filename.remove_extension f) ^ ".ml") in
-        let vm  = open_out_bin ((Filename.remove_extension f) ^ ".joe") in
+        let vm  = open_out_gen [Open_binary;Open_wronly;Open_creat]
+                  0o644 ((Filename.remove_extension f) ^ ".joe") in
         let insts = (BacCaml.Emit.f (compileSource ml)) in
             Stdlib.output_bytes vm (Marshal.to_bytes insts [Marshal.No_sharing]) ; close_out vm
       | Nothing -> ()
