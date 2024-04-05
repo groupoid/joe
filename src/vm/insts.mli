@@ -36,10 +36,11 @@ type inst =
   | Lref of string
   | Ldef of string
   | READ_STRING
-  | PRINT_STRING 
+  | PRINT_STRING
 
+val index_of : inst -> int
 val show_inst : inst -> string
-val insts : inst array
+val instsmap : inst array
 
 module Printer : sig
   val pp_inst_map : unit -> unit

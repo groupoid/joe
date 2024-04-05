@@ -4,6 +4,7 @@
   (modules (:standard \ main))
   (flags (-w -4-33-40-41))
   (libraries str MinCaml)
+  (foreign_stubs (language c) (names libmincaml))
   (foreign_stubs (language c) (names float))
   (preprocess (pps ppx_deriving.show ppx_deriving.enum)))
 

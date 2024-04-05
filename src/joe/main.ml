@@ -1,4 +1,5 @@
 open MinCaml
+open BacCaml
 
 type backend =
    | Intel
@@ -30,8 +31,7 @@ let lexbuf oc l =
   match !backend_type with
   | Intel -> X64.RegAlloc.f p |> X64.Emit.f oc
   | ARM -> Arm64.RegAlloc.f p |> Arm64.Emit.f oc
-  | Virtual -> Asm.show_prog p |> Printf.fprintf oc "%s"
-;;
+  | Virtual -> Stdlib.output_bytes oc (Marshal.to_bytes (Emit.f p) [Marshal.No_sharing])
 
 let string s = lexbuf stdout (Lexing.from_string s)
 
@@ -42,7 +42,7 @@ let main f =
     match !backend_type with
     | Intel -> open_out (f ^ ".intel.s")
     | ARM -> open_out (f ^ ".arm.s")
-    | _ -> stdout
+    | Virtual -> open_out_bin (f ^ ".joe")
   in
   try
     let input = Lexing.from_channel inchan in

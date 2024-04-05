@@ -4,7 +4,7 @@ open Config
 open Insts
 open Stdlib
 
-let max_stack_depth = 1000000
+let max_stack_depth = 10000
 let with_debug f = match !vm_debug_flg with true -> f () | false -> ()
 
 let index_of element array =
@@ -15,7 +15,7 @@ let index_of element array =
 let int_of_inst = function
   | Literal n -> n
   | Ldef lbl | Lref lbl -> failwith ("unresolved " ^ lbl)
-  | inst -> index_of inst insts
+  | inst -> index_of inst instsmap
 
 let string_of = function
   | Literal n -> Printf.sprintf "Literal %d" n
@@ -144,10 +144,11 @@ let rec interp code pc stack =
   then fst (pop stack)
   else (
     let i, pc = fetch code pc in
-    let inst = insts.(i) in
-    debug pc inst stack;
+    let inst = instsmap.(i) in
+(*    debug pc inst stack; *)
     match inst with
-    | UNIT -> interp code (pc + 1) stack
+    | UNIT ->
+      interp code (pc + 1) stack
     | NOT ->
       let v, stack = pop stack in
       let stack =
@@ -328,4 +329,5 @@ let run_bin : fundef_bin_t -> int = fun fundefs ->
 (* convert the given program into binary, and then run *)
 type fundef_asm_t = inst array
 
-let run_asm : fundef_asm_t -> int = fun fundefs -> run_bin (Array.map int_of_inst fundefs)
+let run_asm : fundef_asm_t -> int =
+    fun fundefs -> run_bin (Array.map int_of_inst fundefs)

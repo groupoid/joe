@@ -1,5 +1,4 @@
-type inst =
-  | UNIT
+type inst = | UNIT
   | ADD
   | SUB
   | MUL
@@ -39,7 +38,7 @@ type inst =
   | PRINT_STRING
 [@@deriving show]
 
-let insts =
+let instsmap =
   [| UNIT
    ; ADD
    ; SUB
@@ -83,7 +82,7 @@ let index_of instr =
   | TRACING_COMP -> -1048
   | METHOD_COMP -> -1024
   | _ ->
-    Array.to_list insts
+    Array.to_list instsmap
     |> List.mapi (fun i instr -> instr, i)
     |> List.find (fun (instr', i) -> instr = instr')
     |> snd
@@ -97,7 +96,7 @@ module Printer = struct
            Printf.printf "%s => %d\n" (show_inst instr) i;
            i + 1)
          0
-         insts)
+         instsmap)
   ;;
 
   let pp_insts_counter = ref 0
