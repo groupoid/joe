@@ -22,10 +22,17 @@ $ dune build
 Samples
 -------
 
-Execute sample (MinCaml) in VM:
+Compile sample for MinCaml bytecode:
 
 ```sh
-$ _build/install/default/bin/vm -no-sh -interp examples/ack.ml
+$ _build/install/default/bin/vm -compile examples/ack.ml
+509
+```
+
+Run sample from MinCaml bytecode in VM interpreter:
+
+```sh
+$ _build/install/default/bin/vm -exec examples/ack.ml
 509
 ```
 

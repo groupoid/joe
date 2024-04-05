@@ -4,7 +4,14 @@ open Config
 open Insts
 open Stdlib
 
-let max_stack_depth = 10000
+let max_stack_depth = 10000000
+
+(* run the given program by calling the function id 0 *)
+type fundef_bin_t = int array
+
+(* convert the given program into binary, and then run *)
+type fundef_asm_t = inst array
+
 let with_debug f = match !vm_debug_flg with true -> f () | false -> ()
 
 let index_of element array =
@@ -35,6 +42,12 @@ type value =
   | String' of string
   | Array' of value array
 
+type stack = int * value array
+let push : stack -> value -> stack = fun (sp, stack) v -> stack.(sp) <- v ; sp + 1, stack
+let pop : stack -> value * stack = fun (sp, stack) -> stack.(sp - 1), (sp - 1, stack)
+let take : stack -> int -> value = fun (sp, stack) n -> stack.(sp - n - 1)
+let drop : stack -> int -> stack = fun (sp, stack) n -> sp - n, stack
+
 module Value = struct
   let ( |+| ) v1 v2 = match v1, v2 with | Int' i, Int' j -> Int' (i  +  j) | _ -> failwith "invalid value"
   let ( |-| ) v1 v2 = match v1, v2 with | Int' i, Int' j -> Int' (i  -  j) | _ -> failwith "invalid value"
@@ -64,12 +77,6 @@ module Value = struct
   let value_of_string s = String' s
 end
 
-type stack = int * value array
-
-let push : stack -> value -> stack = fun (sp, stack) v -> stack.(sp) <- v ; sp + 1, stack
-let pop : stack -> value * stack = fun (sp, stack) -> stack.(sp - 1), (sp - 1, stack)
-let take : stack -> int -> value = fun (sp, stack) n -> stack.(sp - n - 1)
-let drop : stack -> int -> stack = fun (sp, stack) n -> sp - n, stack
 
 let frame_reset : stack -> int -> int -> int -> stack =
  fun (sp, stack) o l n ->
@@ -135,17 +142,19 @@ let checkpoint =
        if !counter = 0 then failwith "expired!" else counter := !counter - 1)
     else fun () -> ()
 
-let debug pc inst stack = with_debug (fun () -> eprintf "%d %s %s\n" (pc - 1) (show_inst inst) (dump_stack stack))
+let debug pc inst stack = with_debug (fun () -> Printf.printf "%d %s %s\n" (pc - 1) (show_inst inst) (dump_stack stack))
 
 let rec interp code pc stack =
   checkpoint ();
   let open Value in
   if pc < 0
-  then fst (pop stack)
-  else (
+  then
+    fst (pop stack)
+  else try
     let i, pc = fetch code pc in
+(*    let _ = Printf.printf "%d:%d\n" pc i in *)
     let inst = instsmap.(i) in
-(*    debug pc inst stack; *)
+    debug pc inst stack;
     match inst with
     | UNIT ->
       interp code (pc + 1) stack
@@ -316,18 +325,14 @@ let rec interp code pc stack =
       let stack = v |> String.length |> value_of_int |> push stack in
       interp code pc stack
     | METHOD_COMP | TRACING_COMP | METHOD_ENTRY | JIT_SETUP -> interp code pc stack
-    | _ -> failwith (sprintf "un matched pattern: %s" (show_inst inst)))
+    | _ -> failwith (sprintf "un matched pattern: %s" (show_inst inst))
+  with | e -> (value_of_int (-987))
 
-(* run the given program by calling the function id 0 *)
-type fundef_bin_t = int array
 
 let run_bin : fundef_bin_t -> int = fun fundefs ->
     let open Value in
     let stack = push (make_stack ()) (value_of_int (-987)) in
     int_of_value @@ interp fundefs 0 stack
 
-(* convert the given program into binary, and then run *)
-type fundef_asm_t = inst array
 
-let run_asm : fundef_asm_t -> int =
-    fun fundefs -> run_bin (Array.map int_of_inst fundefs)
+let run_asm : fundef_asm_t -> int = fun fundefs -> run_bin (Array.map int_of_inst fundefs)
