@@ -5,54 +5,28 @@ open X64
 
 let data = ref [] (* 浮動小数点数の定数テーブル (caml2html: virtual_data) *)
 
-let classify xts ini addf addi =
-  List.fold_left
-    (fun acc (x, t) ->
-      match t with
-      | Type.Unit -> acc
-      | Type.Float -> addf acc x
-      | _ -> addi acc x t)
-    ini
-    xts
-;;
+let classify xts ini addf addi = List.fold_left (fun acc (x, t) ->
+    match t with
+    | Type.Unit -> acc
+    | Type.Float -> addf acc x
+    | _ -> addi acc x t) ini xts
 
 let separate xts =
-  classify
-    xts
-    ([], [])
-    (fun (int, float) x -> int, float @ [ x ])
-    (fun (int, float) x _ -> int @ [ x ], float)
-;;
+    classify xts ([], []) (fun (int, float) x -> int, float @ [ x ])
+                          (fun (int, float) x _ -> int @ [ x ], float)
 
 let expand xts ini addf addi =
-  classify
-    xts
-    ini
-    (fun (offset, acc) x ->
-      let offset = align offset in
-      offset + 8, addf x offset acc)
-    (fun (offset, acc) x t ->
-      (* NOTE: 64ビットなので4バイトから8バイトにする *)
-      offset + 8, addi x t offset acc)
-;;
+    classify xts ini (fun (offset, acc) x -> let offset = align offset in offset + 8, addf x offset acc)
+                     (fun (offset, acc) x t -> (* NOTE: 64ビットなので4バイトから8バイトにする *) offset + 8, addi x t offset acc)
 
 let rec g env = function (* 式の仮想マシンコード生成 (caml2html: virtual_g) *)
   | Closure.Unit -> Ans Nop
   | Closure.Int i -> Ans (Set i)
-  | Closure.Float d ->
-    let l =
-      try
-        (* すでに定数テーブルにあったら再利用 Cf. https://github.com/esumii/min-caml/issues/13 *)
-        let l, _ = List.find (fun (_, d') -> d = d') !data in
-        l
-      with
-      | Not_found ->
-        let l = Id.L (Id.genid "l") in
-        data := (l, d) :: !data;
-        l
-    in
-    let x = Id.genid "l" in
-    Let ((x, Type.Int), SetL l, Ans (LdDF (x, C 0, 1)))
+  | Closure.Float d -> let l = try
+    (* すでに定数テーブルにあったら再利用 Cf. https://github.com/esumii/min-caml/issues/13 *)
+    let l, _ = List.find (fun (_, d') -> d = d') !data in l
+    with | Not_found -> let l = Id.L (Id.genid "l") in data := (l, d) :: !data; l
+    in let x = Id.genid "l" in Let ((x, Type.Int), SetL l, Ans (LdDF (x, C 0, 1)))
   | Closure.Neg x -> Ans (Neg x)
   | Closure.Add (x, y) -> Ans (Add (x, V y))
   | Closure.Sub (x, y) -> Ans (Sub (x, V y))
@@ -150,7 +124,6 @@ let rec g env = function (* 式の仮想マシンコード生成 (caml2html: vir
     | Type.Array _ -> Ans (St (z, x, V y, 4))
     | _ -> assert false)
   | Closure.ExtArray (Id.L x) -> Ans (SetL (Id.L ("min_caml_" ^ x)))
-;;
 
 (* 関数の仮想マシンコード生成 (caml2html: virtual_h) *)
 let h
@@ -160,26 +133,18 @@ let h
     ; Closure.body = e
     ; annot
     }
-  =
-  let int, float = separate yts in
-  let offset, load =
-    expand
-      zts
-      (* NOTE: 64ビットなので4バイトから8バイトにする *)
-      (8, g (M.add x t (M.add_list yts (M.add_list zts M.empty))) e)
-      (fun z offset load -> fletd (z, LdDF (x, C offset, 1), load))
-      (fun z t offset load -> Let ((z, t), Ld (x, C offset, 1), load))
-  in
-  match t with
-  | Type.Fun (_, t2) ->
-    { name = Id.L x; args = int; fargs = float; body = load; ret = t2; annot }
-  | _ -> assert false
-;;
+  = let int, float = separate yts in
+    let offset, load = expand zts
+        (* NOTE: 64ビットなので4バイトから8バイトにする *)
+        (8, g (M.add x t (M.add_list yts (M.add_list zts M.empty))) e)
+        (fun z offset load -> fletd (z, LdDF (x, C offset, 1), load))
+        (fun z t offset load -> Let ((z, t), Ld (x, C offset, 1), load))
+    in match t with
+    | Type.Fun (_, t2) -> { name = Id.L x; args = int; fargs = float; body = load; ret = t2; annot }
+    | _ -> assert false
 
 (* プログラム全体の仮想マシンコード生成 (caml2html: virtual_f) *)
 let f (Closure.Prog (fundefs, e)) =
-  data := [];
-  let fundefs = List.map h fundefs in
-  let e = g M.empty e in
-  Prog (!data, fundefs, e)
-;;
+    data := [];
+    let fundefs = List.map h fundefs in
+    let e = g M.empty e in Prog (!data, fundefs, e)

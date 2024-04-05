@@ -1,5 +1,4 @@
-type t =
-  (* MinCaml¤Î¹½Ê¸¤òÉ½¸½¤¹¤ë¥Ç¡¼¥¿·¿ (caml2html: syntax_t) *)
+type t = (* MinCamlã®æ§‹æ–‡ã‚’è¡¨ç¾ã™ã‚‹ãƒ‡ãƒ¼ã‚¿åž‹ (caml2html: syntax_t) *)
   | Unit
   | Bool of bool
   | Int of int
@@ -28,76 +27,30 @@ type t =
   | Array of t * t
   | Get of t * t
   | Put of t * t * t
-  | List of t list
-[@@deriving show]
+  | List of t list [@@deriving show]
 
 and fundef =
   { name : Id.t * Type.t
   ; args : (Id.t * Type.t) list
   ; body : t
   ; mutable annot : [ `TJ | `MJ ] option
-  }
-[@@deriving show]
+  } [@@deriving show]
 
 let rec print_t = function
   | Unit -> print_string "Unit"
   | Bool v -> Printf.printf "Bool(%s)" (string_of_bool v)
   | Int v -> Printf.printf "Int(%s)" (string_of_int v)
   | Float v -> Printf.printf "Float(%s)" (string_of_float v)
-  | Not t ->
-    print_string "Not(";
-    print_t t;
-    print_string ")"
-  | Neg t ->
-    print_string "Neg(";
-    print_t t;
-    print_string ")"
-  | Add (t1, t2) ->
-    print_string "Add(";
-    print_t t1;
-    print_string ", ";
-    print_t t2;
-    print_string ")";
-    print_string ")"
-  | Sub (t1, t2) ->
-    print_string "Sub(";
-    print_t t1;
-    print_string ", ";
-    print_t t2;
-    print_string ")"
-  | FNeg t ->
-    print_string "FNeg(";
-    print_t t;
-    print_string ")"
-  | FAdd (t1, t2) ->
-    print_string "FAdd(";
-    print_t t1;
-    print_string ", ";
-    print_t t2;
-    print_string ")"
-  | FSub (t1, t2) ->
-    print_string "FSub(";
-    print_t t1;
-    print_t t2;
-    print_string ")"
-  | FMul (t1, t2) ->
-    print_string "FMul(";
-    print_t t1;
-    print_string ", ";
-    print_t t2;
-    print_string ")"
-  | FDiv (t1, t2) ->
-    print_string "FDiv(";
-    print_t t1;
-    print_string ", ";
-    print_t t2;
-    print_string ")"
-  | Eq (t1, t2) ->
-    print_string "Eq(";
-    print_t t1;
-    print_string ", ";
-    print_t t2;
-    print_string ")"
+  | Not t -> print_string "Not("; print_t t; print_string ")"
+  | Neg t -> print_string "Neg("; print_t t; print_string ")"
+  | Add (t1, t2) -> print_string "Add("; print_t t1; print_string ", "; print_t t2; print_string ")"; print_string ")"
+  | Sub (t1, t2) -> print_string "Sub("; print_t t1; print_string ", "; print_t t2; print_string ")"
+  | FNeg t -> print_string "FNeg("; print_t t; print_string ")"
+  | FAdd (t1, t2) -> print_string "FAdd("; print_t t1; print_string ", "; print_t t2; print_string ")"
+  | FSub (t1, t2) -> print_string "FSub("; print_t t1; print_t t2; print_string ")"
+  | FMul (t1, t2) -> print_string "FMul("; print_t t1; print_string ", "; print_t t2; print_string ")"
+  | FDiv (t1, t2) -> print_string "FDiv("; print_t t1; print_string ", "; print_t t2; print_string ")"
+  | Eq (t1, t2) -> print_string "Eq("; print_t t1; print_string ", "; print_t t2; print_string ")"
   | LE (t1, t2) ->
     print_string "LE(";
     print_t t1;
