@@ -302,6 +302,7 @@ let rec interp code pc stack =
       let v = read_int () in
       let stack = push stack (value_of_int v) in
       interp code pc stack
+    | JIT_SETUP -> interp code pc stack
     | READ_STRING ->
       let v = read_line () in
       let stack = push stack (value_of_string v) in

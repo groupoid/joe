@@ -36,7 +36,7 @@ let index_of instr = match instr with
    | FRAME_RESET -> 24 | JIT_SETUP -> 25
    | RAND_INT -> 26 | READ_INT -> 27 | READ_STRING -> 28
    | PRINT_INT -> 29 | PRINT_NEWLINE -> 30 | PRINT_STRING -> 31
-   | _ -> 0
+   | _ -> 32
 
 module Printer = struct
   let pp_inst_map () =
