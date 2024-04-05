@@ -316,7 +316,6 @@ let rec interp code pc stack =
       let v = string_of_value s in print_string v;
       let stack = v |> String.length |> value_of_int |> push stack in
       interp code pc stack
-    | METHOD_COMP | TRACING_COMP | METHOD_ENTRY | JIT_SETUP -> interp code pc stack
     | _ -> failwith (sprintf "un matched pattern: %s" (show_inst inst))
   with | e -> raise e
 

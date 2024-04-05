@@ -1,92 +1,42 @@
-type inst = | UNIT
-  | ADD
-  | SUB
-  | MUL
-  | NOT
-  | NEG
-  | LT
-  | EQ
-  | JUMP_IF_ZERO
-  | JUMP
-  | CALL
-  | RET
-  | HALT
-  | DUP
-  | POP1
-  | CONST
-  | GET
-  | PUT
-  | ARRAY_MAKE
-  | FRAME_RESET (* o l n *)
-  | PRINT_INT
-  | PRINT_NEWLINE
-  | METHOD_ENTRY
-  | CONST0
-  | DUP0
-  | METHOD_COMP
-  | TRACING_COMP
-  | JIT_SETUP
-  | RAND_INT
-  | DIV
-  | MOD
-  | GT
-  | READ_INT
-  | Literal of int
-  | Lref of string
-  | Ldef of string
-  | READ_STRING
-  | PRINT_STRING
-[@@deriving show]
+type inst =
+   | UNIT                                            (* terminator *)
+   | ADD | SUB | MUL | DIV | MOD | NOT | NEG (* binary and ALU ops *)
+   | LT | GT | EQ                                      (* equality *)
+   | JUMP_IF_ZERO | JUMP | CALL | RET | HALT       (* control flow *)
+   | DUP | DUP0 | POP1                                (* stack ops *)
+   | CONST0 | CONST                                   (* constants *)
+   | GET | PUT | ARRAY_MAKE                             (* vectors *)
+   | FRAME_RESET | JIT_SETUP                              (* o l n *)
+   | RAND_INT | READ_INT | READ_STRING                  (* io read *)
+   | PRINT_INT | PRINT_NEWLINE | PRINT_STRING          (* io write *)
+   | Literal of int
+   | Lref of string
+   | Ldef of string [@@deriving show]
 
 let instsmap =
   [| UNIT
-   ; ADD
-   ; SUB
-   ; MUL
-   ; NOT
-   ; NEG
-   ; LT
-   ; EQ
-   ; JUMP_IF_ZERO
-   ; JUMP
-   ; CALL
-   ; RET
-   ; HALT
-   ; DUP
-   ; POP1
-   ; CONST
-   ; GET
-   ; PUT
-   ; ARRAY_MAKE
-   ; FRAME_RESET (* o l n *)
-   ; PRINT_INT
-   ; PRINT_NEWLINE
-   ; METHOD_ENTRY
-   ; CONST0
-   ; DUP0
-   ; METHOD_COMP                (* -1024 *)
-   ; TRACING_COMP               (* -1048 *)
-   ; JIT_SETUP
-   ; RAND_INT
-   ; DIV
-   ; MOD
-   ; GT
-   ; READ_INT
-   ; READ_STRING
-   ; PRINT_STRING
+   ; ADD ; SUB ; MUL ; DIV ; MOD ; NOT ; NEG
+   ; LT ; GT ; EQ
+   ; JUMP_IF_ZERO ; JUMP ; CALL ; RET ; HALT
+   ; DUP ; DUP0 ; POP1
+   ; CONST0 ; CONST
+   ; GET ; PUT ; ARRAY_MAKE
+   ; FRAME_RESET (* o l n *) ; JIT_SETUP
+   ; RAND_INT ; READ_INT ; READ_STRING
+   ; PRINT_INT ; PRINT_NEWLINE ; PRINT_STRING
   |]
-;;
 
-let index_of instr =
-  match instr with
-  | TRACING_COMP -> -1048
-  | METHOD_COMP -> -1024
-  | _ ->
-    Array.to_list instsmap
-    |> List.mapi (fun i instr -> instr, i)
-    |> List.find (fun (instr', i) -> instr = instr')
-    |> snd
-;;
+let index_of instr = match instr with
+   | UNIT -> 0 | ADD -> 1 | SUB -> 2 | MUL -> 3
+   | DIV -> 4 | MOD -> 5 | NOT -> 6 | NEG -> 7
+   | LT -> 8 | GT -> 9 | EQ -> 10 | HALT -> 11
+   | JUMP_IF_ZERO -> 12 | JUMP -> 13 | CALL -> 14 | RET -> 15
+   | DUP -> 16 | DUP0 -> 17 | POP1 -> 18 | CONST0 -> 19
+   | CONST -> 20 | GET -> 21 | PUT -> 22 | ARRAY_MAKE -> 23
+   | FRAME_RESET -> 24 | JIT_SETUP -> 25
+   | RAND_INT -> 26 | READ_INT -> 27 | READ_STRING -> 28
+   | PRINT_INT -> 29 | PRINT_NEWLINE -> 30 | PRINT_STRING -> 31
+   | _ -> 0
 
 module Printer = struct
   let pp_inst_map () =

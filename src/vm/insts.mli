@@ -1,42 +1,17 @@
 type inst =
-  | UNIT
-  | ADD
-  | SUB
-  | MUL
-  | NOT
-  | NEG
-  | LT
-  | EQ
-  | JUMP_IF_ZERO
-  | JUMP
-  | CALL
-  | RET
-  | HALT
-  | DUP
-  | POP1
-  | CONST
-  | GET
-  | PUT
-  | ARRAY_MAKE
-  | FRAME_RESET (* o l n *)
-  | PRINT_INT
-  | PRINT_NEWLINE
-  | METHOD_ENTRY
-  | CONST0
-  | DUP0
-  | METHOD_COMP
-  | TRACING_COMP
-  | JIT_SETUP
-  | RAND_INT
-  | DIV
-  | MOD
-  | GT
-  | READ_INT
-  | Literal of int
-  | Lref of string
-  | Ldef of string
-  | READ_STRING
-  | PRINT_STRING
+   | UNIT                                            (* terminator *)
+   | ADD | SUB | MUL | DIV | MOD | NOT | NEG (* binary and ALU ops *)
+   | LT | GT | EQ                                      (* equality *)
+   | JUMP_IF_ZERO | JUMP | CALL | RET | HALT       (* control flow *)
+   | DUP | DUP0 | POP1                                (* stack ops *)
+   | CONST0 | CONST                                   (* constants *)
+   | GET | PUT | ARRAY_MAKE                             (* vectors *)
+   | FRAME_RESET | JIT_SETUP                              (* o l n *)
+   | RAND_INT | READ_INT | READ_STRING                  (* io read *)
+   | PRINT_INT | PRINT_NEWLINE | PRINT_STRING          (* io write *)
+   | Literal of int
+   | Lref of string
+   | Ldef of string
 
 val index_of : inst -> int
 val show_inst : inst -> string
