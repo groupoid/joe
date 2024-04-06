@@ -29,7 +29,7 @@ let index_of instr = match instr with
 let instsmap =
   [| UNIT ; ADD ; SUB ; MUL ; DIV ; MOD ; NOT ; NEG
    ; LT ; GT ; EQ ; JUMP_IF_ZERO ; JUMP ; CALL ; RET ; HALT
-   ; DUP ; DUP0 ; POP0 | POP1 ; CONST0 ; CONST
+   ; DUP ; DUP0 ; POP0 ; POP1 ; CONST0 ; CONST
    ; GET ; PUT ; ARRAY_MAKE ; FRAME_RESET ; JIT_SETUP
    ; RAND_INT ; READ_INT ; READ_STRING
    ; PRINT_INT ; PRINT_NEWLINE ; PRINT_STRING
