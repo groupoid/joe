@@ -3,7 +3,7 @@ type inst =
    | ADD | SUB | MUL | DIV | MOD | NOT | NEG (* binary and ALU ops *)
    | LT | GT | EQ                                      (* equality *)
    | JUMP_IF_ZERO | JUMP | CALL | RET | HALT       (* control flow *)
-   | DUP | DUP0 | POP1                                (* stack ops *)
+   | DUP | DUP0 | POP0 | POP1                         (* stack ops *)
    | CONST0 | CONST                                   (* constants *)
    | GET | PUT | ARRAY_MAKE                             (* vectors *)
    | FRAME_RESET | JIT_SETUP                              (* o l n *)

@@ -12,12 +12,14 @@ let save x =
   stackset := S.add x !stackset;
   if not (List.mem x !stackmap) then
     stackmap := !stackmap @ [x]
+
 let savef x =
   stackset := S.add x !stackset;
   if not (List.mem x !stackmap) then
     (let pad =
       if List.length !stackmap mod 2 = 0 then [] else [Id.gentmp Type.Int] in
     stackmap := !stackmap @ pad @ [x; x])
+
 let locate x =
   let rec loc = function
     | [] -> []
@@ -50,11 +52,13 @@ let rec shuffle sw xys =
   | xys, acyc -> acyc @ shuffle sw xys
 
 type dest = Tail | NonTail of Id.t (* 末尾かどうかを表すデータ型 (caml2html: emit_dest) *)
+
 let rec g oc = function (* 命令列のアセンブリ生成 (caml2html: emit_g) *)
   | dest, Ans(exp) -> g' oc (dest, exp)
   | dest, Let((x, t), exp, e) ->
       g' oc (NonTail(x), exp);
       g oc (dest, e)
+
 and g' oc = function (* 各命令のアセンブリ生成 (caml2html: emit_gprime) *)
   (* 末尾でなかったら計算結果をdestにセット (caml2html: emit_nontail) *)
   | NonTail(_), Nop -> ()
@@ -235,6 +239,8 @@ and g' oc = function (* 各命令のアセンブリ生成 (caml2html: emit_gprim
         Printf.fprintf oc "\tfmr\t%s, %s\n" (reg a) (reg fregs.(0));
       (* lrをスタックから復元 *)
       Printf.fprintf oc "\tmov lr, %s\n" (reg reg_tmp)
+   | _, _ -> ()
+
 and g'_tail_if oc e1 e2 b bn =
   let b_else = Id.genid (b ^ "_else") in
   Printf.fprintf oc "\t%s %s\n" bn b_else;
@@ -243,6 +249,7 @@ and g'_tail_if oc e1 e2 b bn =
   Printf.fprintf oc "%s:\n" b_else;
   stackset := stackset_back;
   g oc (Tail, e2)
+
 and g'_non_tail_if oc dest e1 e2 b bn =
   let b_else = Id.genid (b ^ "_else") in
   let b_cont = Id.genid (b ^ "_cont") in
@@ -257,6 +264,7 @@ and g'_non_tail_if oc dest e1 e2 b bn =
   Printf.fprintf oc "%s:\n" b_cont;
   let stackset2 = !stackset in
   stackset := S.inter stackset1 stackset2
+
 and g'_args oc x_reg_cl ys zs =
   let (i, yrs) =
     List.fold_left

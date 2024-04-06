@@ -26,6 +26,7 @@ let rec target' src (dest, t) = function
       true, (target_args src regs 0 ys @
              target_args src fregs 0 zs)
   | _ -> false, []
+
 and target src dest = function (* register targeting (caml2html: regalloc_target) *)
   | Ans(exp) -> target' src dest exp
   | Let(xt, exp, e) ->
@@ -33,6 +34,7 @@ and target src dest = function (* register targeting (caml2html: regalloc_target
       if c1 then true, rs1 else
       let c2, rs2 = target src dest e in
       c2, rs1 @ rs2
+
 and target_args src all n = function (* auxiliary function for Call *)
   | [] -> []
   | y :: ys when src = y -> all.(n) :: target_args src all (n + 1) ys
@@ -41,6 +43,7 @@ and target_args src all n = function (* auxiliary function for Call *)
 type alloc_result = (* allocにおいてspillingがあったかどうかを表すデータ型 *)
   | Alloc of Id.t (* allocated register *)
   | Spill of Id.t (* spilled variable *)
+
 let rec alloc dest cont regenv x t =
   (* allocate a register or spill a variable *)
   assert (not (M.mem x regenv));
@@ -87,10 +90,12 @@ let add x r regenv =
 
 (* auxiliary functions for g' *)
 exception NoReg of Id.t * Type.t
+
 let find x t regenv =
   if is_reg x then x else
   try M.find x regenv
   with Not_found -> raise (NoReg(x, t))
+
 let find' x' regenv =
   match x' with
   | V(x) -> V(find x Type.Int regenv)
@@ -113,11 +118,13 @@ let rec g dest cont regenv = function (* 命令列のレジスタ割り当て (c
       | Alloc(r) ->
           let (e2', regenv2) = g dest cont (add x r regenv1) e in
           (concat e1' (r, t) e2', regenv2))
+
 and g'_and_restore dest cont regenv exp = (* 使用される変数をスタックからレジスタへRestore (caml2html: regalloc_unspill) *)
   try g' dest cont regenv exp
   with NoReg(x, t) ->
     ((* Format.eprintf "restoring %s@." x; *)
      g dest cont regenv (Let((x, t), Restore(x), Ans(exp))))
+
 and g' dest cont regenv = function (* 各命令のレジスタ割り当て (caml2html: regalloc_gprime) *)
   | Nop | Li _ | Set _ | SetL _ | Comment _ | Restore _ | FLi _ as exp -> (Ans(exp), regenv)
   | Mov x -> Ans (Mov (find x Type.Int regenv)), regenv
@@ -155,6 +162,8 @@ and g' dest cont regenv = function (* 各命令のレジスタ割り当て (caml
       else
         g'_call dest cont regenv exp (fun ys zs -> CallDir(Id.L(x), ys, zs)) ys zs
   | Save(x, y) -> assert false
+  | _ as exp -> (Ans(exp), regenv)
+
 and g'_if dest cont regenv exp constr e1 e2 = (* ifのレジスタ割り当て (caml2html: regalloc_if) *)
   let (e1', regenv1) = g dest cont regenv e1 in
   let (e2', regenv2) = g dest cont regenv e2 in
@@ -177,6 +186,7 @@ and g'_if dest cont regenv exp constr e1 e2 = (* ifのレジスタ割り当て (
      (Ans(constr e1' e2'))
      (fv cont),
    regenv')
+
 and g'_call dest cont regenv exp constr ys zs = (* 関数呼び出しのレジスタ割り当て (caml2html: regalloc_call) *)
   (List.fold_left
      (fun e x ->
