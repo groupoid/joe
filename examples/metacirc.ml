@@ -38,12 +38,11 @@ let rec interp stack sp bytecode pc =
                                 stack.(sp-rands) <- r ; interp stack (sp-rands+1) bytecode (pc+3))
                             else (stack.(sp) <- 200 ; (* push jit flag *) stack.(sp+1) <- pc+3 ; interp stack (sp+2) bytecode addr)
 
-    else if instr = 15 then
-         let n = bytecode.(pc+1) in let v = stack.(sp-1) in
-         let addr = stack.(sp-2) in  (* sp: sp-3 *)
-         let mode = stack.(sp-3) in  (* sp: sp-3 *)
-         if mode = 200 then (* check jit flag *) (stack.(sp-n-3) <- v; (* sp: sp-3-n+1 = sp-2-n *)
-         let sp2 = sp-n-2 in interp stack sp2 bytecode addr) else v
+    else if instr = 15 then let n = bytecode.(pc+1) in let v = stack.(sp-1) in
+                            let addr = stack.(sp-2) in  (* sp: sp-3 *)
+                            let mode = stack.(sp-3) in  (* sp: sp-3 *)
+                            if mode = 200 then (* check jit flag *) (stack.(sp-n-3) <- v; (* sp: sp-3-n+1 = sp-2-n *)
+                            let sp2 = sp-n-2 in interp stack sp2 bytecode addr) else v
 
     else if instr = 16 then let n = bytecode.(pc+1) in let v = stack.(sp-n-1) in stack.(sp) <- v ; interp stack (sp+1) bytecode (pc+2)
     else if instr = 17 then let v = stack.(sp-1) in stack.(sp) <- v ; interp stack (sp+1) bytecode (pc+1)
@@ -66,6 +65,7 @@ let rec interp stack sp bytecode pc =
     else if instr = 31 then let _ = print_newline() in interp stack sp bytecode (pc+1)
     else if instr = 32 then let v = stack.(sp-1) in print_string v ; interp stack (sp-1) bytecode (pc+1)
     else -1000 in
+
 let stk  = Array.make 200000 (-987) in
 let rec read_code i n arr =
   if i = n then arr
