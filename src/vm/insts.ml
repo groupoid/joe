@@ -1,3 +1,4 @@
+
 type inst =
    | UNIT                                            (* terminator *)
    | ADD | SUB | MUL | DIV | MOD | NOT | NEG (* binary and ALU ops *)
@@ -13,19 +14,6 @@ type inst =
    | Lref of string
    | Ldef of string [@@deriving show]
 
-let instsmap =
-  [| UNIT
-   ; ADD ; SUB ; MUL ; DIV ; MOD ; NOT ; NEG
-   ; LT ; GT ; EQ
-   ; JUMP_IF_ZERO ; JUMP ; CALL ; RET ; HALT
-   ; DUP ; DUP0 ; POP0 | POP1
-   ; CONST0 ; CONST
-   ; GET ; PUT ; ARRAY_MAKE
-   ; FRAME_RESET (* o l n *) ; JIT_SETUP
-   ; RAND_INT ; READ_INT ; READ_STRING
-   ; PRINT_INT ; PRINT_NEWLINE ; PRINT_STRING
-  |]
-
 let index_of instr = match instr with
    | UNIT -> 0 | ADD -> 1 | SUB -> 2 | MUL -> 3
    | DIV -> 4 | MOD -> 5 | NOT -> 6 | NEG -> 7
@@ -37,6 +25,15 @@ let index_of instr = match instr with
    | RAND_INT -> 27 | READ_INT -> 28 | READ_STRING -> 29
    | PRINT_INT -> 30 | PRINT_NEWLINE -> 31 | PRINT_STRING -> 32
    | _ -> 33
+
+let instsmap =
+  [| UNIT ; ADD ; SUB ; MUL ; DIV ; MOD ; NOT ; NEG
+   ; LT ; GT ; EQ ; JUMP_IF_ZERO ; JUMP ; CALL ; RET ; HALT
+   ; DUP ; DUP0 ; POP0 | POP1 ; CONST0 ; CONST
+   ; GET ; PUT ; ARRAY_MAKE ; FRAME_RESET ; JIT_SETUP
+   ; RAND_INT ; READ_INT ; READ_STRING
+   ; PRINT_INT ; PRINT_NEWLINE ; PRINT_STRING
+  |]
 
 module Printer = struct
   let pp_inst_map () =
