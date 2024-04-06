@@ -14,7 +14,6 @@ Setup
 -----
 
 ```
-$ opam switch set 4.14.2
 $ opam install ppx_deriving ppx_inline_test
 $ dune build
 ```
