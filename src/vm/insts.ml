@@ -3,7 +3,7 @@ type inst =
    | ADD | SUB | MUL | DIV | MOD | NOT | NEG (* binary and ALU ops *)
    | LT | GT | EQ                                      (* equality *)
    | JUMP_IF_ZERO | JUMP | CALL | RET | HALT       (* control flow *)
-   | DUP | DUP0 | POP1                                (* stack ops *)
+   | DUP | DUP0 | POP0 | POP1                         (* stack ops *)
    | CONST0 | CONST                                   (* constants *)
    | GET | PUT | ARRAY_MAKE                             (* vectors *)
    | FRAME_RESET | JIT_SETUP                              (* o l n *)
@@ -18,7 +18,7 @@ let instsmap =
    ; ADD ; SUB ; MUL ; DIV ; MOD ; NOT ; NEG
    ; LT ; GT ; EQ
    ; JUMP_IF_ZERO ; JUMP ; CALL ; RET ; HALT
-   ; DUP ; DUP0 ; POP1
+   ; DUP ; DUP0 ; POP0 | POP1
    ; CONST0 ; CONST
    ; GET ; PUT ; ARRAY_MAKE
    ; FRAME_RESET (* o l n *) ; JIT_SETUP
@@ -31,12 +31,12 @@ let index_of instr = match instr with
    | DIV -> 4 | MOD -> 5 | NOT -> 6 | NEG -> 7
    | LT -> 8 | GT -> 9 | EQ -> 10 | HALT -> 11
    | JUMP_IF_ZERO -> 12 | JUMP -> 13 | CALL -> 14 | RET -> 15
-   | DUP -> 16 | DUP0 -> 17 | POP1 -> 18 | CONST0 -> 19
-   | CONST -> 20 | GET -> 21 | PUT -> 22 | ARRAY_MAKE -> 23
-   | FRAME_RESET -> 24 | JIT_SETUP -> 25
-   | RAND_INT -> 26 | READ_INT -> 27 | READ_STRING -> 28
-   | PRINT_INT -> 29 | PRINT_NEWLINE -> 30 | PRINT_STRING -> 31
-   | _ -> 32
+   | DUP -> 16 | DUP0 -> 17 | POP0 -> 18 | POP1 -> 19 | CONST0 -> 20
+   | CONST -> 21 | GET -> 22 | PUT -> 23 | ARRAY_MAKE -> 24
+   | FRAME_RESET -> 25 | JIT_SETUP -> 26
+   | RAND_INT -> 27 | READ_INT -> 28 | READ_STRING -> 29
+   | PRINT_INT -> 30 | PRINT_NEWLINE -> 31 | PRINT_STRING -> 32
+   | _ -> 33
 
 module Printer = struct
   let pp_inst_map () =
