@@ -69,7 +69,7 @@ let rec g oc = function
 
 and g' oc = function
   | NonTail _, Nop -> ()
-  | NonTail x, Set i -> Printf.fprintf oc "\tmovl\t$%d, %s\n" i x
+  | NonTail x, Li i -> Printf.fprintf oc "\tmovl\t$%d, %s\n" i x
   | NonTail x, SetL (Id.L y) -> Printf.fprintf oc "\tmovl\t$%s, %s\n" y x
   | NonTail x, Mov y -> if x <> y then Printf.fprintf oc "\tmovl\t%s, %s\n" y x
   | NonTail x, Neg y ->
@@ -186,7 +186,7 @@ and g' oc = function
     g' oc (NonTail (Id.gentmp Type.Unit), exp);
     Printf.fprintf oc "\tret\n"
   | ( Tail
-    , ((Set _ | SetL _ | Mov _ | Neg _ | Add _ | Mul _ | Div _ | Sub _ | Ld _)
+    , ((Li _ | SetL _ | Mov _ | Neg _ | Add _ | Mul _ | Div _ | Sub _ | Ld _)
       as exp) ) ->
     g' oc (NonTail regs.(0), exp);
     Printf.fprintf oc "\tret\n"

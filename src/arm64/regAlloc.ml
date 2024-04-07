@@ -126,7 +126,7 @@ and g'_and_restore dest cont regenv exp = (* 使用される変数をスタッ�
      g dest cont regenv (Let((x, t), Restore(x), Ans(exp))))
 
 and g' dest cont regenv = function (* 各命令のレジスタ割り当て (caml2html: regalloc_gprime) *)
-  | Nop | Li _ | Set _ | SetL _ | Comment _ | Restore _ | FLi _ as exp -> (Ans(exp), regenv)
+  | Nop | Li _ | SetL _ | Comment _ | Restore _ | FLi _ as exp -> (Ans(exp), regenv)
   | Mov x -> Ans (Mov (find x Type.Int regenv)), regenv
   | Mr(x) -> (Ans(Mr(find x Type.Int regenv)), regenv)
   | Neg(x) -> (Ans(Neg(find x Type.Int regenv)), regenv)

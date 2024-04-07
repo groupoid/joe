@@ -10,7 +10,6 @@ and exp =
   | Nop
   | Li    of int
   | FLi   of Id.l
-  | Set   of int
   | SetL  of Id.l
   | Mr    of Id.t
   | Mov   of Id.t

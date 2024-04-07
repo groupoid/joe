@@ -55,7 +55,7 @@ let rec g oc = function (* 命令列のアセンブリ生成 (caml2html: emit_g)
 and g' oc = function (* 各命令のアセンブリ生成 (caml2html: emit_gprime) *)
   (* 末尾でなかったら計算結果をdestにセット (caml2html: emit_nontail) *)
   | NonTail _, Nop -> ()
-  | NonTail x, Set i -> Printf.fprintf oc "\tmovq\t$%d, %s\n" i x
+  | NonTail x, Li i -> Printf.fprintf oc "\tmovq\t$%d, %s\n" i x
   | NonTail x, SetL (Id.L y) -> Printf.fprintf oc "\tmovq\t$%s, %s\n" y x
   | NonTail x, Mov y -> if x <> y then Printf.fprintf oc "\tmovq\t%s, %s\n" y x
   | NonTail x, Neg y ->
@@ -159,7 +159,7 @@ and g' oc = function (* 各命令のアセンブリ生成 (caml2html: emit_gprim
     g' oc (NonTail (Id.gentmp Type.Unit), exp);
     Printf.fprintf oc "\tret\n"
   | ( Tail
-    , ((Set _ | SetL _ | Mov _ | Neg _ | Add _ | Sub _ | Mul _ | Ld _) as exp) )
+    , ((Li _ | SetL _ | Mov _ | Neg _ | Add _ | Sub _ | Mul _ | Ld _) as exp) )
     ->
     g' oc (NonTail regs.(0), exp);
     Printf.fprintf oc "\tret\n"

@@ -106,7 +106,7 @@ and compile_exp fname env exp =
   let open Asm in
   match exp with
   | Nop -> []
-  | Set i -> compile_id_or_imm env (C i)
+  | Li i -> compile_id_or_imm env (C i)
   | Mov var -> compile_id_or_imm env (V var)
   | Neg var -> compile_id_or_imm env (V var) @ [ NEG ]
   | Add (x, y) -> compile_id_or_imm env (V x) @ compile_id_or_imm (shift_env env) y @ [ ADD ]

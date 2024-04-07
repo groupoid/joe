@@ -12,7 +12,6 @@ and exp =
   | Nop
   | Li    of int
   | FLi   of Id.l
-  | Set   of int
   | SetL  of Id.l
   | Mr    of Id.t
   | Mov   of Id.t
@@ -125,7 +124,7 @@ let rec remove_and_uniq xs = function
 let fv_id_or_imm = function V x -> [ x ] | _ -> []
 
 let rec fv_exp = function
-  | Nop | Set _ | SetL _ | Comment _ | Restore _ -> []
+  | Nop | SetL _ | Comment _ | Restore _ -> []
   | Mov x | Neg x | FMov x | FNeg x | Save (x, _) -> [ x ]
   | Add (x, y') | Mul (x, y') | Sub (x, y') | Div (x, y') | Mod (x, y')
   | Ld (x, y', _) | LdDF (x, y', _) -> x :: fv_id_or_imm y'
