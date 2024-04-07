@@ -69,12 +69,12 @@ let main f =
   let sufix = backend_type_to_suffix !backend_type in
   write_file f f_without_filename sufix;
   match !backend_type with
-    | Intel | ARM -> (
-      let arch = backend_type_to_arch !backend_type in
-      String.concat " " ["gcc"; f_without_filename^sufix; "src/"^arch^"/libmincaml.c src/"^arch^"/stub.c -o "; f_without_filename ^ ".exe"] |> Sys.command |> ignore
-     ) 
+    | Intel | ARM ->
+      ( let arch = backend_type_to_arch !backend_type in
+        String.concat " " [ "gcc"; f_without_filename^sufix;
+                            "src/"^arch^"/libmincaml.c src/"^arch^"/stub.c -o ";
+                            f_without_filename ^ ".exe"] |> Sys.command |> ignore )
     | _ -> ()
-  
 
 let () =
   let files = ref [] in
