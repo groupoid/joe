@@ -58,9 +58,7 @@ let main f =
     close_in inchan;
     close_out outchan;
     raise e
-  
-  
-  
+
 let () =
   let files = ref [] in
   Arg.parse
