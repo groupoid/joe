@@ -130,6 +130,8 @@ and compile_exp fname env exp =
     @ compile_t fname env then_exp @ [ JUMP; Lref l2 ] @ [ Ldef l1 ]
     @ compile_t fname env else_exp @ [ Ldef l2 ]
   | CallDir (Id.L "min_caml_mul", [ x; y ], _) -> compile_id_or_imm env (V x) @ compile_id_or_imm (shift_env env) (V y) @ [ MUL ]
+  | CallDir (Id.L "min_caml_div", [ x; y ], _) -> compile_id_or_imm env (V x) @ compile_id_or_imm (shift_env env) (V y) @ [ DIV ]
+  | CallDir (Id.L "min_caml_rem", [ x; y ], _) -> compile_id_or_imm env (V x) @ compile_id_or_imm (shift_env env) (V y) @ [ MOD ]
   | CallDir (Id.L "min_caml_read_int", _, _) -> [ READ_INT ]
   | CallDir (Id.L "min_caml_print_int", [ x ], _) -> compile_id_or_imm env (V x) @ [ PRINT_INT ]
   | CallDir (Id.L "min_caml_read_string", _, _) -> [ READ_STRING ]
