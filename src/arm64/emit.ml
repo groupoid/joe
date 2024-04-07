@@ -238,7 +238,7 @@ and g' oc = function (* 各命令のアセンブリ生成 (caml2html: emit_gprim
         Printf.fprintf oc "\tfmr\t%s, %s\n" (reg a) (reg fregs.(0));
       (* lrをスタックから復元 *)
       Printf.fprintf oc "\tmov lr, %s\n" (reg reg_tmp)
-   | _, _ -> ()
+(*   | _, _ -> () *)
 
 and g'_tail_if oc e1 e2 b bn =
   let b_else = Id.genid (b ^ "_else") in
