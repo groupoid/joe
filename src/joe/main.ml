@@ -52,7 +52,7 @@ let main f =
     with_flag ast_dump
       ~tru:(fun _ -> ast outchan input)
       ~fls:(fun _ -> lexbuf outchan input; close_in inchan; close_out outchan);
-      String.concat " " ["gcc"; filename; "src/arm64/libmincaml.c src/arm64/stub.c -o "; f ^ ".exe"] |> Sys.command |> ignore
+      Sys.command ("gcc" ^ filename ^ "src/arm64/libmincaml.c src/arm64/stub.c -o " ^ f ^ ".exe") |> ignore;
   with
   | e ->
     close_in inchan;
