@@ -40,18 +40,19 @@ let open_rewrite f = open_out_gen [Open_binary;Open_wronly;Open_creat] 0o644 f
 
 let main f =
   let inchan = open_in f in
-  let outchan =
-    let f = Filename.remove_extension f in
+  let f = Filename.remove_extension f in
+  let filename = 
     match !backend_type with
-    | Intel   -> open_rewrite (f ^ ".intel.s")
-    | ARM     -> open_rewrite (f ^ ".arm.s")
-    | Virtual -> open_rewrite (f ^ ".joe")
-  in
+    | Intel   -> f ^ ".intel.s"
+    | ARM     -> f ^ ".arm.s"
+    | Virtual -> f ^ ".joe" in
+  let outchan = open_rewrite filename in
   try
     let input = Lexing.from_channel inchan in
     with_flag ast_dump
       ~tru:(fun _ -> ast outchan input)
-      ~fls:(fun _ -> lexbuf outchan input; close_in inchan; close_out outchan)
+      ~fls:(fun _ -> lexbuf outchan input; close_in inchan; close_out outchan);
+      Sys.command ("gcc" ^ filename ^ "src/arm64/libmincaml.c src/arm64/stub.c -o " ^ f ^ ".exe") |> ignore;
   with
   | e ->
     close_in inchan;
