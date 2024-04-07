@@ -38,26 +38,43 @@ let string s = lexbuf stdout (Lexing.from_string s)
 
 let open_rewrite f = open_out_gen [Open_binary;Open_wronly;Open_creat] 0o644 f 
 
-let main f =
-  let inchan = open_in f in
-  let f = Filename.remove_extension f in
-  let filename = 
-    match !backend_type with
-    | Intel   -> f ^ ".intel.s"
-    | ARM     -> f ^ ".arm.s"
-    | Virtual -> f ^ ".joe" in
-  let outchan = open_rewrite filename in
+
+let backend_type_to_arch = function
+  | Intel   -> "x64"
+  | ARM     -> "arm64"
+  | Virtual -> failwith "Virtual machine does not have an architecture"
+
+let backend_type_to_suffix = function
+  | Intel   -> ".intel.s"
+  | ARM     -> ".arm.s"
+  | Virtual -> ".joe"
+
+
+let write_file f f_without_filename sufix =
+  let inchan = open_in f in    
+  let outchan = open_rewrite (f_without_filename ^ sufix) in
   try
     let input = Lexing.from_channel inchan in
     with_flag ast_dump
       ~tru:(fun _ -> ast outchan input)
       ~fls:(fun _ -> lexbuf outchan input; close_in inchan; close_out outchan);
-      Sys.command ("gcc" ^ filename ^ "src/arm64/libmincaml.c src/arm64/stub.c -o " ^ f ^ ".exe") |> ignore;
-  with
+    with
   | e ->
     close_in inchan;
     close_out outchan;
     raise e
+  
+let main f =
+  let f_without_filename = Filename.remove_extension f in
+  let sufix = backend_type_to_suffix !backend_type in
+  write_file f f_without_filename sufix;
+  match !backend_type with
+    | Intel | ARM -> (
+      let arch = backend_type_to_arch !backend_type in
+      String.concat " " ["gcc"; f_without_filename^sufix; "src/"^arch^"/libmincaml.c src/"^arch^"/stub.c -o "; f_without_filename ^ ".exe"] |> Sys.command |> ignore
+     ) 
+    | _ -> ()
+  
 
 let () =
   let files = ref [] in
