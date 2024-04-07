@@ -83,6 +83,9 @@ and g' oc = function (* 各命令のアセンブリ生成 (caml2html: emit_gprim
   | NonTail(x), Mr(y) when x = y -> ()
   | NonTail(x), Mr(y) -> Printf.fprintf oc "\tmov %s, %s\n" (reg x) (reg y)
   | NonTail(x), Neg(y) -> Printf.fprintf oc "\tneg\t%s, %s\n" (reg x) (reg y)
+  | NonTail(x), CallDir(Id.L "min_caml_mul", ys, zs) -> g'_args oc [] ys zs; Printf.fprintf oc "\tb min_caml_mul\n"
+  | NonTail(x), CallDir(Id.L "min_caml_div", ys, zs) -> g'_args oc [] ys zs; Printf.fprintf oc "\tb min_caml_div\n"
+  | NonTail(x), CallDir(Id.L "min_caml_rem", ys, zs) -> g'_args oc [] ys zs; Printf.fprintf oc "\tb min_caml_rem\n"
   | NonTail(x), Add(y, V(z)) -> Printf.fprintf oc "\tadd\t%s, %s, %s\n" (reg x) (reg y) (reg z)
   | NonTail(x), Add(y, C(z)) -> Printf.fprintf oc "\tadd %s, %s, %d\n" (reg x) (reg y) z
   | NonTail(x), Sub(y, V(z)) -> Printf.fprintf oc "\tsub\t%s, %s, %s\n" (reg x) (reg y) (reg z)
@@ -191,6 +194,9 @@ and g' oc = function (* 各命令のアセンブリ生成 (caml2html: emit_gprim
       Printf.fprintf oc "\tbr %s\n" (reg reg_sw)
       (* Printf.fprintf oc "\tlwz\t%s, 0(%s)\n" (reg reg_sw) (reg reg_cl);
       Printf.fprintf oc "\tmtctr\t%s\n\tbctr\n" (reg reg_sw); *)
+  | Tail, CallDir(Id.L "min_caml_mul", ys, zs) -> g'_args oc [] ys zs; Printf.fprintf oc "\tb min_caml_mul\n"
+  | Tail, CallDir(Id.L "min_caml_div", ys, zs) -> g'_args oc [] ys zs; Printf.fprintf oc "\tb min_caml_div\n"
+  | Tail, CallDir(Id.L "min_caml_rem", ys, zs) -> g'_args oc [] ys zs; Printf.fprintf oc "\tb min_caml_rem\n"
   | Tail, CallDir(Id.L(x), ys, zs) -> (* 末尾呼び出し *)
       g'_args oc [] ys zs;
       Printf.fprintf oc "\tb\t%s\n" x
@@ -238,7 +244,7 @@ and g' oc = function (* 各命令のアセンブリ生成 (caml2html: emit_gprim
         Printf.fprintf oc "\tfmr\t%s, %s\n" (reg a) (reg fregs.(0));
       (* lrをスタックから復元 *)
       Printf.fprintf oc "\tmov lr, %s\n" (reg reg_tmp)
-(*   | _, _ -> () *)
+   | _, _ -> ()
 
 and g'_tail_if oc e1 e2 b bn =
   let b_else = Id.genid (b ^ "_else") in

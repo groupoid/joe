@@ -132,6 +132,9 @@ and g' dest cont regenv = function (* 各命令のレジスタ割り当て (caml
   | Neg(x) -> (Ans(Neg(find x Type.Int regenv)), regenv)
   | Add(x, y') -> (Ans(Add(find x Type.Int regenv, find' y' regenv)), regenv)
   | Sub(x, y') -> (Ans(Sub(find x Type.Int regenv, find' y' regenv)), regenv)
+  | Mul(x, y') -> (Ans(Mul(find x Type.Int regenv, find' y' regenv)), regenv)
+  | Div(x, y') -> (Ans(Div(find x Type.Int regenv, find' y' regenv)), regenv)
+  | Mod(x, y') -> (Ans(Mod(find x Type.Int regenv, find' y' regenv)), regenv)
   | Lfd(x, y') -> (Ans(Lfd(find x Type.Int regenv, find' y' regenv)), regenv)
   | Lwz(x, y') -> (Ans(Lwz(find x Type.Int regenv, find' y' regenv)), regenv)
   | Ld(x, y', i) -> (Ans(Ld(find x Type.Int regenv, find' y' regenv, i)), regenv)
@@ -154,13 +157,11 @@ and g' dest cont regenv = function (* 各命令のレジスタ割り当て (caml
   | CallCls(x, ys, zs) as exp ->
       if List.length ys > Array.length regs - 2 || List.length zs > Array.length fregs - 1 then
         failwith (Format.sprintf "cannot allocate registers for arugments to %s" x)
-      else
-        g'_call dest cont regenv exp (fun ys zs -> CallCls(find x Type.Int regenv, ys, zs)) ys zs
+      else g'_call dest cont regenv exp (fun ys zs -> CallCls(find x Type.Int regenv, ys, zs)) ys zs
   | CallDir(Id.L(x), ys, zs) as exp ->
       if List.length ys > Array.length regs - 1 || List.length zs > Array.length fregs - 1 then
         failwith (Format.sprintf "cannot allocate registers for arugments to %s" x)
-      else
-        g'_call dest cont regenv exp (fun ys zs -> CallDir(Id.L(x), ys, zs)) ys zs
+      else g'_call dest cont regenv exp (fun ys zs -> CallDir(Id.L(x), ys, zs)) ys zs
   | Save(x, y) -> assert false
   | _ as exp -> (Ans(exp), regenv)
 

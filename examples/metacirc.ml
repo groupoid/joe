@@ -21,9 +21,9 @@ let rec interp stack sp bytecode pc =
     if instr = 0000000 then interp stack sp bytecode (pc+1)
     else if instr = 01 then let v2 = stack.(sp-1) in let v1 = stack.(sp-2) in stack.(sp-2) <- (v1+v2) ; interp stack (sp-1) bytecode (pc+1)
     else if instr = 02 then let v2 = stack.(sp-1) in let v1 = stack.(sp-2) in stack.(sp-2) <- (v1-v2) ; interp stack (sp-1) bytecode (pc+1)
-    else if instr = 03 then let v2 = stack.(sp-1) in let v1 = stack.(sp-2) in stack.(sp-2) <- (v1*v2) ; interp stack (sp-1) bytecode (pc+1)
-    else if instr = 04 then let v2 = stack.(sp-1) in let v1 = stack.(sp-2) in stack.(sp-2) <- (v1/v2) ; interp stack (sp-1) bytecode (pc+1)
-    else if instr = 05 then let v2 = stack.(sp-1) in let v1 = stack.(sp-2) in stack.(sp-2) <- (v1 mod v2) ; interp stack (sp-1) bytecode (pc+1)
+    else if instr = 03 then let v2 = stack.(sp-1) in let v1 = stack.(sp-2) in stack.(sp-2) <- (mul v1 v2) ; interp stack (sp-1) bytecode (pc+1)
+    else if instr = 04 then let v2 = stack.(sp-1) in let v1 = stack.(sp-2) in stack.(sp-2) <- (div v1 v2) ; interp stack (sp-1) bytecode (pc+1)
+    else if instr = 05 then let v2 = stack.(sp-1) in let v1 = stack.(sp-2) in stack.(sp-2) <- (rem v1 v2) ; interp stack (sp-1) bytecode (pc+1)
     else if instr = 06 then let v1 = stack.(sp-1) in let n = (if v1 = 0 then 1 else 0) in stack.(sp-1) <- n; interp stack sp bytecode (pc+1)
     else if instr = 07 then let v1 = stack.(sp-1) in stack.(sp-1) <- (-v1); interp stack sp bytecode (pc+1)
     else if instr = 08 then let v2 = stack.(sp-1) in let v1 = stack.(sp-2) in let n = (if v1 < v2 then 1 else 0) in stack.(sp-2) <- n ; interp stack (sp-1) bytecode (pc+1)
@@ -63,7 +63,7 @@ let rec interp stack sp bytecode pc =
     else if instr = 28 then let n = read_int () in stack.(sp) <- n ; interp stack (sp+1) bytecode (pc+1)
     else if instr = 30 then let v = stack.(sp-1) in print_int v ; interp stack (sp-1) bytecode (pc+1)
     else if instr = 31 then let _ = print_newline() in interp stack sp bytecode (pc+1)
-    else if instr = 32 then let v = stack.(sp-1) in print_string v ; interp stack (sp-1) bytecode (pc+1)
+(*    else if instr = 32 then let v = stack.(sp-1) in print_string v ; interp stack (sp-1) bytecode (pc+1) *)
     else -1000 in
 
 let stk  = Array.make 200000 (-987) in

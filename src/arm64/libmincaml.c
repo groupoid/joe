@@ -12,6 +12,9 @@ void min_caml_print_byte(long n) asm("min_caml_print_byte");
 long min_caml_read_int() asm("min_caml_read_int");
 double min_caml_read_float() asm("min_caml_read_float");
 double min_caml_atan(double x) asm("min_caml_atan");
+long min_caml_mul(long x, long y) asm("min_caml_mul");
+long min_caml_div(long x, long y) asm("min_caml_div");
+long min_caml_rem(long x, long y) asm("min_caml_rem");
 double min_caml_cos(double x) asm("min_caml_cos");
 double min_caml_floor(double x) asm("min_caml_floor");
 double min_caml_sin(double x) asm("min_caml_sin");
@@ -130,6 +133,18 @@ double min_caml_float_of_int(long n) {
 // int_of_float
 long min_caml_int_of_float(double d) {
   return (long)d;
+}
+
+long min_caml_div(long x, long y) {
+  return (long)(x/y);
+}
+
+long min_caml_rem(long x, long y) {
+  return x % y;
+}
+
+long min_caml_mul(long x, long y) {
+  return x * y;
 }
 
 // sqrt
