@@ -46,8 +46,7 @@ let main f =
         let insts = (Marshal.from_channel joe) in BacCaml.VM.run_asm insts ; close_in joe
       | Compile ->
         let ml  = open_in ((Filename.remove_extension f) ^ ".ml") in
-        let vm  = open_out_gen [Open_binary;Open_wronly;Open_creat]
-                  0o644 ((Filename.remove_extension f) ^ ".joe") in
+        let vm  = open_out_gen [Open_binary;Open_wronly;Open_creat] 0o644 ((Filename.remove_extension f) ^ ".joe") in
         let insts = (BacCaml.Emit.f (compileSource ml)) in
             Stdlib.output_bytes vm (Marshal.to_bytes insts [Marshal.No_sharing]) ; close_out vm
       | Nothing -> ()
@@ -62,7 +61,7 @@ let () =
         ( "-compile", Arg.Unit (fun _ ->  backend_type := Compile), "emit MinCaml IR" ) ;
         ( "-exec", Arg.Unit (fun _ -> backend_type := Interpret), "run IR in VM interpreter" ) ;
         ( "-no-tail", Arg.Unit (fun _ -> Config.tail_opt_flg := false), "disable optimization for tail-recursive call") ;
-        ( "-no-fr", Arg.Unit (fun _ -> Config.frame_reset_flg := false), "disable to emit frame_reset" ) 
+        ( "-no-fr", Arg.Unit (fun _ -> Config.frame_reset_flg := true), "disable to emit frame_reset" ) 
       ])
     (fun s -> files := !files @ [ s ])
     ( "MinCaml IR Virtual Machine (c) 2024 Namdak Tonpa\n"

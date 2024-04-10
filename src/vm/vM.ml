@@ -37,7 +37,7 @@ let string_of = function
 type value =
   | Int' of int
   | String' of string
-  | Array' of value array
+  | Array' of value array [@@deriving show]
 
 type stack = int * value array
 let push : stack -> value -> stack = fun (sp, stack) v -> stack.(sp) <- v ; sp + 1, stack
@@ -149,7 +149,7 @@ let rec interp code pc stack =
     fst (pop stack)
   else try
     let i, pc = fetch code pc in
-(*    let _ = Printf.printf "%d:%d\n" pc i in *)
+    let _ = Printf.printf "%d:%d\n" pc i in
     let inst = instsmap.(i) in
     debug pc inst stack;
     match inst with
@@ -262,6 +262,7 @@ let rec interp code pc stack =
       let o, pc = fetch code pc in
       let l, pc = fetch code pc in
       let n, pc = fetch code pc in
+      let _ = Printf.printf "Frame Reset size: %d %d %d\n", o, l, n in
       let _ = with_debug (fun _ -> eprintf "o: %d, l %d, n: %d\n" o l n) in
       let stack = frame_reset stack o l n in
       interp code pc stack
@@ -277,10 +278,11 @@ let rec interp code pc stack =
       let init, stack = pop stack in
       let size, stack = pop stack in
       let stack = push stack (value_of_array (Array.make (int_of_value size) init)) in
-      interp code pc stack
+      Printf.printf "ARRAY_MAKE size: 1\n" ; interp code pc stack
     | GET ->
       let n, stack = pop stack in
       let arr, stack = pop stack in
+      let _ = Printf.printf "GET n: 1\n" in
       let stack = push stack (array_of_value arr).(int_of_value n) in
       interp code pc stack
     | PUT ->

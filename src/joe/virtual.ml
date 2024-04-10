@@ -115,13 +115,13 @@ let rec g env = function (* 式の仮想マシンコード生成 (caml2html: vir
     (match M.find x env with
     | Type.Array Type.Unit -> Ans Nop
     | Type.Array Type.Float -> Ans (LdDF (x, V y, 8))
-    | Type.Array _ -> Ans (Ld (x, V y, 4))
+    | Type.Array _ -> Ans (Ld (x, V y, 8))
     | _ -> assert false)
   | Closure.Put (x, y, z) ->
     (match M.find x env with
     | Type.Array Type.Unit -> Ans Nop
     | Type.Array Type.Float -> Ans (StDF (z, x, V y, 8))
-    | Type.Array _ -> Ans (St (z, x, V y, 4))
+    | Type.Array _ -> Ans (St (z, x, V y, 8))
     | _ -> assert false)
   | Closure.ExtArray (Id.L x) -> Ans (SetL (Id.L ("min_caml_" ^ x)))
 

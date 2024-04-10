@@ -14,7 +14,6 @@ let gen_label, reset =
       counter := !counter + 1;
       "$" ^ string_of_int l)
   , fun () -> counter := 0 )
-;;
 
 (* compilation environment maps local variable names to local variable
    numbers *)
@@ -24,7 +23,6 @@ let lookup env var =
   with
   | Some v -> fst v
   | None -> failwith (Printf.sprintf "%s not found" var)
-;;
 
 let extend_env env var = var :: env
 let shift_env env = extend_env env "*dummy*"
@@ -36,7 +34,6 @@ let build_arg_env args =
   match !sh_flg with
   | true -> return_address_marker :: jit_flg_marker :: List.rev args
   | false -> return_address_marker :: List.rev args
-;;
 
 (* computes the number of arguments to this frame. The stack has a shape like
    [...local vars...][ret addr][..args...], the return address position from the
@@ -44,13 +41,11 @@ let build_arg_env args =
 let arity_of_env env =
   let num_local_vars = lookup env return_address_marker in
   List.length env - num_local_vars - 1, num_local_vars
-;;
 
 let arity_of_env_sh env =
   let num_local_vars = lookup env return_address_marker in
   let flg_offset = lookup env return_address_marker in
   List.length env - num_local_vars - 1, num_local_vars, flg_offset
-;;
 
 let label_counter = ref 0
 
@@ -58,16 +53,12 @@ let gen_label _ =
   let l = !label_counter in
   label_counter := l + 1;
   "$" ^ string_of_int l
-;;
 
 let reset _ = label_counter := 0
 
 let compile_id_or_imm env = function
   | Asm.C n -> if n = 0 then [ CONST0 ] else [ CONST; Literal n ]
-  | Asm.V x ->
-    let y = lookup env x in
-    if y = 0 then [ DUP0 ] else [ DUP; Literal y ]
-;;
+  | Asm.V x -> let y = lookup env x in if y = 0 then [ DUP0 ] else [ DUP; Literal y ]
 
 let rec compile_t fname env =
   let open Asm in
@@ -145,7 +136,6 @@ and compile_exp fname env exp =
     @ (if fname = "main" then [ JIT_SETUP ] else []) @ [ CALL; Lref var; Literal (List.length rands) ]
   | Ld (x, y, _) -> compile_id_or_imm env (V x) @ compile_id_or_imm (shift_env env) y @ [ GET ]
   | St (x, y, z, _) -> compile_id_or_imm env (V x) @ compile_id_or_imm (shift_env env) (V y) @ compile_id_or_imm (shift_env (shift_env env)) z @ [ PUT ]
-(*  | Slw (x, y, z) -> compile_id_or_imm env (V x) @ compile_id_or_imm (shift_env env) (V y) @ compile_id_or_imm (shift_env (shift_env env)) z @ [ PUT ] *)
   | Stw (x, y, z) -> compile_id_or_imm env (V x) @ compile_id_or_imm (shift_env env) (V y) @ compile_id_or_imm (shift_env (shift_env env)) z @ [ PUT ]
   | exp -> failwith (Printf.sprintf "un matched pattern: %s" (Asm.show_exp exp))
 ;;
