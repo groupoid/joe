@@ -1,0 +1,61 @@
+type term =
+  | Var of string
+  | Lam of string * term
+  | App of term * term
+
+let rec string_of_term = function
+  | Var x -> x
+  | Lam (x, t) -> "λ" ^ x ^ ". " ^ string_of_term t
+  | App (t1, t2) -> "(" ^ string_of_term t1 ^ " " ^ string_of_term t2 ^ ")"
+
+let rec subst x s = function
+  | Var y -> if x = y then s else Var y
+  | Lam (y, t) when x <> y -> Lam (y, subst x s t)
+  | App (f, a) -> App (subst x s f, subst x s a)
+  | t -> t
+
+let rec equal t1 t2 =
+  match t1, t2 with
+  | Var x, Var y -> x = y
+  | Lam (x, b), Lam (y, b') -> equal b (subst y (Var x) b')
+  | Lam (x, b), t -> equal b (App (t, Var x))
+  | t, Lam (x, b) -> equal (App (t, Var x)) b
+  | App (f1, a1), App (f2, a2) -> equal f1 f2 && equal a1 a2
+  | _ -> false
+
+let rec reduce = function
+  | App (Lam (x, b), a) -> subst x a b
+  | App (f, a) -> App (reduce f, reduce a)
+  | t -> t
+
+let rec normalize t =
+  let t' = reduce t in
+  if equal t t' then t else normalize t'
+
+let id = Lam ("x", Var "x")
+let const = Lam ("x", Lam ("y", Var "x"))
+let one = Lam ("f", Lam ("x", App (Var "f", Var "x")))
+let two = Lam ("f", Lam ("x", App (Var "f", App (Var "f", Var "x"))))
+
+let beta           = (App (Lam ("x", Var "x"), Var "y"), Var "y")
+let eta            = (Lam ("x", App (Var "f", Var "x")), Var "f")
+let eta_domain     = (Lam ("x", App (Var "f", Var "x")), Var "f")
+let invalid_eta    = (Lam ("x", Var "z"), Var "z")
+let invalid_eta_v  = (Lam ("x", Var "u"), Var "u")
+
+let test_equal name (t1, t2) =
+  let t1' = normalize t1 in
+  let t2' = normalize t2 in
+  let result = equal t1' t2' in
+  Printf.printf "Test %s:\n- Term1: %s\n- Term2: %s\n- Result: %s\n\n"
+    name
+    (string_of_term t1)
+    (string_of_term t2)
+    (if result then "PASS" else "FAIL")
+
+let () =
+  test_equal "Beta" beta;
+  test_equal "Eta" eta;
+  test_equal "Eta Domain" eta_domain;
+  test_equal "Invalid Eta" invalid_eta;
+  test_equal "Invalid Eta Var" invalid_eta_v;
