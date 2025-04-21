@@ -1,0 +1,112 @@
+include header
+
+html
+    head
+        meta(property='og:title'       content='Joe')
+        meta(property='og:description' content='Чисте нетипізоване лямбда-числення')
+        meta(property='og:url'         content='https://joe.groupoid.space/')
+
+block title
+    title JOE
+
+block content
+    +header('', 'Joe', 'Мінімальна мова для послідовних обчислень в декартово-замкнених категоріях')
+    article.main
+        .exe
+            section
+                h1 Анотація
+            aside Намдак Тонпа
+                time ДАТА: 10 ЖОВТНЯ 2016
+            section
+                +tex.
+                    Мова програмування $\mathbf{Joe}$ — це чисте нетипізоване лямбда-числення,
+                    базова модель обчислень, заснована на абстракціях і застосуванні функцій,
+                    що використовується як основа для багатьох функціональних мов.
+
+        .semantics
+            section
+                h2#ast Синтаксис
+                +tex.
+                    Терми $\mathbf{Joe}$ складаються зі змінних, лямбда-абстракцій і застосувань.
+                    Це мінімальна мова, що підтримує обчислення через бета-редукцію.
+                code.
+                    I = #identifier
+                    O = I | ( O ) | O O | λ I -> O
+                br.
+                code.
+                    type term =
+                        | Var of string
+                        | Lam of string * term
+                        | App of term * term
+                br.
+
+                h2#rules Правила обчислень
+                +tex.
+                    Єдиним правилом обчислень у $\mathbf{Joe}$ є бета-редукція, що замінює
+                    застосування лямбда-абстракції на підстановку аргументу.
+                code.
+                    App (Lam (x, b), a) → subst x a b
+                br.
+                +tex(true).
+                    $$
+                    \begin{equation}
+                    \tag{$\beta$-reduction}
+                    \dfrac
+                    {(\lambda x . b)\ a}
+                    {b [a/x]}
+                    \end{equation}
+                    $$
+
+                h2#ast Синтаксис
+                +tex.
+                    Терми $\mathbf{Joe}$ кодуються як алгебраїчний тип даних у мові OCaml.
+                code.
+                    type term =
+                        | Var of string
+                        | Lam of string * term
+                        | App of term * term
+                br.
+
+                h2 Підстановка
+                code.
+                    let rec subst x s = function
+                        | Var y -> if x = y then s else Var y
+                        | Lam (y, t) when x <> y -> Lam (y, subst x s t)
+                        | App (f, a) -> App (subst x s f, subst x s a)
+                        | t -> t
+                br.
+
+                h2 Рівність
+                code.
+                    let rec equal t1 t2 =
+                        match t1, t2 with
+                        | Var x, Var y -> x = y
+                        | Lam (x, b), Lam (y, b') -> equal b (subst y (Var x) b')
+                        | Lam (x, b), t -> equal b (App (t, Var x))
+                        | t, Lam (x, b) -> equal (App (t, Var x)) b
+                        | App (f1, a1), App (f2, a2) -> equal f1 f2 && equal a1 a2
+                        | _ -> false
+                br.
+
+                h2 Редукція
+                code.
+                    let rec reduce = function
+                        | App (Lam (x, b), a) -> subst x a b
+                        | App (f, a) -> App (reduce f, reduce a)
+                        | t -> t
+                br.
+
+                h2 Нормалізація
+                code.
+                    let rec normalize t =
+                        let t' = reduce t in
+                        if equal t t' then t else normalize t'
+                br.
+
+            section
+                h1 Бібліографія
+                p.
+                    [1]. <a href="https://github.com/groupoid/groupoid.space/blob/master/articles/lambda/lambda.pdf">Додаток I: Чисте лямбда-числення для OCaml</a><br>
+                    [2]. <a href="https://www.cs.princeton.edu/~dpw/courses/cos326-2017sp/notes/lambda.pdf">Вступ до лямбда-числення</a><br>
+
+include footer
