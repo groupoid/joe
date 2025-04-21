@@ -3,7 +3,7 @@ include header
 html
     head
         meta(property='og:title'       content='Joe')
-        meta(property='og:description' content='Чисте нетипізоване лямбда-числення')
+        meta(property='og:description' content='Чиста нетипізована мова для декартово-замкнених категорій')
         meta(property='og:url'         content='https://joe.groupoid.space/')
 
 block title
@@ -19,94 +19,110 @@ block content
                 time ДАТА: 10 ЖОВТНЯ 2016
             section
                 +tex.
-                    Мова програмування $\mathbf{Joe}$ — це чисте нетипізоване лямбда-числення,
-                    базова модель обчислень, заснована на абстракціях і застосуванні функцій,
-                    що використовується як основа переважної більшості мов програмування.
+                    Мова програмування $\mathbf{Joe}$ — це чиста нетипізована мова, що є внутрішньою мовою декартово-замкнених категорій. Вона базується на лямбда-численні, розширеному парами, проєкціями та термінальним об’єктом, забезпечуючи мінімальну модель для обчислень у категорійному контексті.
 
         .semantics
             section
                 h2#ast Синтаксис
                 +tex.
-                    Терми $\mathbf{Joe}$ складаються зі змінних, лямбда-абстракцій і застосувань.
-                    Це мінімальна мова, що підтримує обчислення через бета-редукцію.
+                    Терми $\mathbf{Joe}$ складаються зі змінних, лямбда-абстракцій, застосувань, пар, проєкцій (першої та другої) та термінального об’єкта. Це мінімальна мова, що підтримує обчислення через бета-редукцію та проєкції.
                 code.
                     I = #identifier
-                    O = I | ( O ) | O O | λ I -> O
+                    O = I | ( O ) | O O | λ I -> O | O , O | O.1 | O.2 | 1
                 br.
                 code.
                     type term =
-                        | Var of string
-                        | Lam of string * term
-                        | App of term * term
+                      | Var of string
+                      | Lam of string * term
+                      | App of term * term
+                      | Pair of term * term
+                      | Fst of term
+                      | Snd of term
+                      | Unit
                 br.
 
                 h2#rules Правила обчислень
                 +tex.
-                    Єдиним правилом обчислень у $\mathbf{Joe}$ є бета-редукція, що замінює
-                    застосування лямбда-абстракції на підстановку аргументу.
+                    Основними правилами обчислень у $\mathbf{Joe}$ є бета-редукція для лямбда-абстракцій та правила проєкцій для пар. Термінальний об’єкт є незвідним.
                 code.
                     App (Lam (x, b), a) → subst x a b
+                    Fst (Pair (t1, t2)) → t1
+                    Snd (Pair (t1, t2)) → t2
                 br.
                 +tex(true).
                     $$
-                    \begin{equation}
+                    \begin{align}
                     \tag{$\beta$-reduction}
                     \dfrac
                     {(\lambda x . b)\ a}
-                    {b [a/x]}
-                    \end{equation}
+                    {b [a/x]} \\
+                    \tag{proj-1}
+                    \dfrac
+                    {\text{fst}\ \langle t_1, t_2 \rangle}
+                    {t_1} \\
+                    \tag{proj-2}
+                    \dfrac
+                    {\text{snd}\ \langle t_1, t_2 \rangle}
+                    {t_2}
+                    \end{align}
                     $$
-
-                h2#ast Синтаксис
-                +tex.
-                    Терми $\mathbf{Joe}$ кодуються як алгебраїчний тип даних у мові OCaml.
-                code.
-                    type term =
-                        | Var of string
-                        | Lam of string * term
-                        | App of term * term
-                br.
 
                 h2 Підстановка
                 code.
                     let rec subst x s = function
-                        | Var y -> if x = y then s else Var y
-                        | Lam (y, t) when x <> y -> Lam (y, subst x s t)
-                        | App (f, a) -> App (subst x s f, subst x s a)
-                        | t -> t
+                      | Var y -> if x = y then s else Var y
+                      | Lam (y, t) when x <> y -> Lam (y, subst x s t)
+                      | App (f, a) -> App (subst x s f, subst x s a)
+                      | Pair (t1, t2) -> Pair (subst x s t1, subst x s t2)
+                      | Fst t -> Fst (subst x s t)
+                      | Snd t -> Snd (subst x s t)
+                      | Unit -> Unit
+                      | t -> t
                 br.
 
                 h2 Рівність
                 code.
                     let rec equal t1 t2 =
-                        match t1, t2 with
-                        | Var x, Var y -> x = y
-                        | Lam (x, b), Lam (y, b') -> equal b (subst y (Var x) b')
-                        | Lam (x, b), t -> equal b (App (t, Var x))
-                        | t, Lam (x, b) -> equal (App (t, Var x)) b
-                        | App (f1, a1), App (f2, a2) -> equal f1 f2 && equal a1 a2
-                        | _ -> false
+                      match t1, t2 with
+                      | Var x, Var y -> x = y
+                      | Lam (x, b), Lam (y, b') -> equal b (subst y (Var x) b')
+                      | Lam (x, b), t -> equal b (App (t, Var x))
+                      | t, Lam (x, b) -> equal (App (t, Var x)) b
+                      | App (f1, a1), App (f2, a2) -> equal f1 f2 && equal a1 a2
+                      | Pair (t1, t2), Pair (t1', t2') -> equal t1 t1' && equal t2 t2'
+                      | Fst t, Fst t' -> equal t t'
+                      | Snd t, Snd t' -> equal t t'
+                      | Unit, Unit -> true
+                      | _ -> false
                 br.
 
                 h2 Редукція
                 code.
                     let rec reduce = function
-                        | App (Lam (x, b), a) -> subst x a b
-                        | App (f, a) -> App (reduce f, reduce a)
-                        | t -> t
+                      | App (Lam (x, b), a) -> subst x a b
+                      | App (f, a) -> App (reduce f, reduce a)
+                      | Pair (t1, t2) -> Pair (reduce t1, reduce t2)
+                      | Fst (Pair (t1, t2)) -> t1
+                      | Fst t -> Fst (reduce t)
+                      | Snd (Pair (t1, t2)) -> t2
+                      | Snd t -> Snd (reduce t)
+                      | Unit -> Unit
+                      | t -> t
                 br.
 
                 h2 Нормалізація
                 code.
                     let rec normalize t =
-                        let t' = reduce t in
-                        if equal t t' then t else normalize t'
+                      let t' = reduce t in
+                      if equal t t' then t else normalize t'
                 br.
-                h2 Внутрішня мова ОЗК
+
+                h2 Внутрішня мова ДЗК
                 +tex.
-                    Представлена мова $\mathbf{Joe}$
-                    є внутрішньою мовою однооб'єктної замкненої категорії (ОЗК),
-                    яку розширивши структурою добутку можна перетворити в декартово-замкнену категорію (ДЗК).
+                    Мова $\mathbf{Joe}$ є внутрішньою мовою декартово-замкненої категорії (ДЗК).
+                    Вона включає лямбда-абстракції та застосування для замкнутої структури,
+                    пари та проєкції для декартового добутку, а також термінальний об’єкт для
+                    відновлення повної структури ДЗК.
 
             section
                 h1 Бібліографія
