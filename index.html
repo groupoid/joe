@@ -34,6 +34,10 @@ O = I | ( O ) | O O | λ I -> O</code><br><code>type term =
     | App (f, a) -> App (reduce f, reduce a)
     | t -> t</code><br><h2>Нормалізація</h2><code>let rec normalize t =
     let t' = reduce t in
-    if equal t t' then t else normalize t'</code><br></section><section><h1>Бібліографія</h1><p>[1]. <a href="https://github.com/groupoid/groupoid.space/blob/master/articles/lambda/lambda.pdf">Додаток I: Чисте лямбда-числення для OCaml</a><br>
-[2]. <a href="https://www.cs.princeton.edu/~dpw/courses/cos326-2017sp/notes/lambda.pdf">Вступ до лямбда-числення</a><br>
+    if equal t t' then t else normalize t'</code><br></section><section><h1>Бібліографія</h1><p>[1]. Alonzo Church. A Set of Postulates for the Foundation of Logic. 1933<br>
+[2]. Alonzo Church. An Unsolvable Problem of Elementary Number Theory. 1941<br>
+[3]. Haskell Curry, Robert Fey. Combinatory Logic, Volume I. 1951<br>
+[4]. Dana Scott. A Type-Free Theory of Lambda Calculus. 1970<br>
+[5]. John Reynolds. Towards a Theory of Type Structure. 1974<br>
+[6]. Henk Barendregt. The Lambda Calculus: Its Syntax and Semantics. 1984<br>
 </p></section></div></article><link rel="stylesheet" href="https://groupoid.space/main.css"><footer class="footer"><a href="https://5HT.co/license/"><img class="footer__logo" src="https://longchenpa.guru/seal.png" width="50"></a><span class="footer__copy">2016&mdash;2025 &copy; <a rel="me" href="https://mathstodon.xyz/@5ht">Namdak Tönpa</a></span><script src="https://groupoid.space/highlight.js"></script><script src="https://groupoid.space/bundle.js"></script></footer>
